@@ -1,0 +1,27 @@
+head-config:
+    title: Knowledge Graph of Mathematics
+    description: This page contains the knowledge graph of whole of Mathematics
+    author: Vinay Krishnan
+
+nodes:
+    - name: fourier_transform
+      title: Fourier Transform
+      subtitle: Projection of function onto a complex frequency function
+      depends-on:
+          - fourier_series_d2c
+
+    - name: fourier_series_d2c
+      title: Discrete to continous
+      importance: low
+      depends-on:
+          - fourier_series
+
+    - name: fourier_series
+      title: Fourier Series
+      subtitle: Projecttion of function onto a complex frequency function
+      depends-on:
+          - inner_product
+
+    - name: inner_product
+      title: Inner Product
+      subtitle: General version of Dot-Product
