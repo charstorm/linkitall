@@ -44,9 +44,13 @@ type GdfData struct {
 // Input must not be nil.
 // This function changes blank ("") value for node.Importance to "normal".
 func validateAndUpdateGraphData(data *GdfData) error {
+	// Number of nodes without any dependencies (level 0 nodes)
+	numLevel0Nodes := 0
 	// Unique nodes (names)
 	uniqueNames := map[string]bool{}
-	for _, node := range data.Nodes {
+	for idx, _ := range data.Nodes {
+		node := &data.Nodes[idx]
+
 		// CHECK: node name must be [a-zA-Z0-9_]
 		if !name_pattern.MatchString(node.Name) {
 			return fmt.Errorf("Invalid node name (only letters, numbers, _) '%v'", node.Name)
@@ -66,6 +70,15 @@ func validateAndUpdateGraphData(data *GdfData) error {
 			return fmt.Errorf("Unknown importance pattern for node '%v': '%v'",
 				node.Name, node.Importance)
 		}
+
+		if len(node.DependsOn) == 0 {
+			// These nodes do not depend on any nodes
+			numLevel0Nodes += 1
+		}
+	}
+
+	if numLevel0Nodes == 0 {
+		return fmt.Errorf("These must be atleast 1 node without any dependency")
 	}
 
 	for _, node := range data.Nodes {
