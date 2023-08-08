@@ -14,10 +14,20 @@ var name_pattern = regexp.MustCompile(`^[a-zA-Z0-9_]+$`)
 var importance_pattern = regexp.MustCompile(`^(lowest|lower|low|normal|high|higher|highest)$`)
 
 // Used in the <head> of the final HTML
-type HeadConfig struct {
+type HeadConfigFields struct {
 	Title       string
 	Description string
 	Author      string
+}
+
+// Configuration related to positioning
+type DisplayConfigFields struct {
+	// Size of horizontal grid step
+	HorizontalStepPx int `yaml:"horizontal-step-px,omitempty"`
+	// Size of vertical grid step
+	VerticalStepPx int `yaml:"vertical-step-px,omitempty"`
+	// Width of the node box
+	NodeBoxWidthPx int `yaml:"node-box-width-px,omitempty"`
 }
 
 // Defines the node definition by the user in the
@@ -36,8 +46,23 @@ type NodeInputFields struct {
 }
 
 type GdfData struct {
-	Nodes      []NodeInputFields `yaml:"nodes"`
-	HeadConfig HeadConfig        `yaml:"head-config"`
+	Nodes         []NodeInputFields   `yaml:"nodes"`
+	HeadConfig    HeadConfigFields    `yaml:"head-config"`
+	DisplayConfig DisplayConfigFields `yaml:"display-config,omitempty"`
+}
+
+func validateAndUpdateDisplayConfig(displayConfig *DisplayConfigFields) error {
+	defaultGridStepPx := 400
+	if displayConfig.HorizontalStepPx == 0 {
+		displayConfig.HorizontalStepPx = defaultGridStepPx
+	}
+	if displayConfig.VerticalStepPx == 0 {
+		displayConfig.VerticalStepPx = defaultGridStepPx
+	}
+	if displayConfig.NodeBoxWidthPx == 0 {
+		displayConfig.NodeBoxWidthPx = 300
+	}
+	return nil
 }
 
 // Validate graph data loaded from YAML
@@ -88,6 +113,11 @@ func validateAndUpdateGraphData(data *GdfData) error {
 				return fmt.Errorf("Unknown dependency for node '%v': '%v'", node.Name, dep)
 			}
 		}
+	}
+
+	err := validateAndUpdateDisplayConfig(&data.DisplayConfig)
+	if err != nil {
+		return err
 	}
 
 	return nil

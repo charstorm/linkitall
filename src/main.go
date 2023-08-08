@@ -26,13 +26,14 @@ func main() {
 	}
 
 	// log.Printf("%+v", gdfData)
-	nodes, err := createComputeAndFillNodeDataList(gdfData)
+	graphInfo, err := createComputeAndFillNodeDataList(gdfData)
+	// log.Printf("%+v\n", graphInfo)
 	if err != nil {
 		log.Printf("Error: %v\n", err)
 		return
 	}
 
-	packedData, err := yaml.Marshal(nodes)
+	packedData, err := yaml.Marshal(graphInfo)
 	if err != nil {
 		log.Printf("Error: %v\n", err)
 		return

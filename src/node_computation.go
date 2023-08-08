@@ -50,8 +50,10 @@ type NodeElemFields struct {
 	UsedByDots []DotElemFields
 	// Classes used by the node (HTML). This will be used to handle parameters like Importance.
 	Classes string
-	// Inline CSS used by the node (HTML). This will be used to handle position of the node.
-	Style string
+	// Left edge pisition (px)
+	LeftPx int
+	// Top edge position (px)
+	TopPx int
 }
 
 // All the data corresponding to a node
@@ -60,10 +62,26 @@ type NodeData struct {
 	InputFields NodeInputFields
 	// Unique number based IDs (computed)
 	IntIdFields NodeIntIdFields
-	// Position related fields (computed)
+	// Position related fields (computed). Does not handle HTML related positions.
 	Position NodePositionFields
-	// HTML related fields (computed)
+	// HTML related fields (computed). Also handles positions on the HTML page.
 	ElemFields NodeElemFields
+}
+
+// Display related computed quantities
+type ComputedDisplayFields struct {
+	CanvasWidthPx  int
+	CanvasHeightPx int
+}
+
+// A struct with nodes and level info of nodes
+type ComputedGraphInfo struct {
+	// All the nodes in the graph
+	Nodes []NodeData
+	// A slice index based map that handles level to node-id
+	LevelMap [][]int
+	// For canvas and such (used for display)
+	// DisplayInfo ComputedDisplayFields
 }
 
 // Create a list of NodeData based on GDF data
@@ -232,20 +250,146 @@ func computeLevels(nodes []NodeData) error {
 	return nil
 }
 
+// Compute shifts - This is straightforward. For every level, we go from left to right.
+// We can also compute levelMap with this function.
+func computeShiftsAndGetLevelMap(nodes []NodeData) [][]int {
+	levelMap := make([][]int, 0, 0)
+	if len(nodes) == 0 {
+		return levelMap
+	}
+
+	// find maxLevel
+	maxLevel := -1
+	for _, node := range nodes {
+		if node.Position.Level > maxLevel {
+			maxLevel = node.Position.Level
+		}
+	}
+
+	if maxLevel < 0 {
+		// shows a bug in code
+		panic(fmt.Sprintf("Unable to find maxLevel"))
+	}
+
+	// Initialize levelMap for each level
+	levelMap = make([][]int, maxLevel+1)
+	for level := 0; level <= maxLevel; level++ {
+		levelMap[level] = make([]int, 0)
+	}
+
+	// Fill levelMap and shift based on each node level
+	for idx, _ := range nodes {
+		node := &nodes[idx]
+		level := node.Position.Level
+		node.Position.Shift = len(levelMap[level])
+		levelMap[level] = append(levelMap[level], idx)
+	}
+
+	// Sanity check:
+	for level := 0; level <= maxLevel; level++ {
+		if len(levelMap[level]) == 0 {
+			panic(fmt.Sprintf("Level %v has 0 nodes", level))
+		}
+	}
+
+	return levelMap
+}
+
+// Used to convert numeric IDs to string IDs used by HTML elements
+func formatIntId(id int) string {
+	// TODO: do we need this many digits?!
+	return fmt.Sprintf("%05d", id)
+}
+
+// Build HTML field IDs used by the connection dots
+func buildDotElemFields(prefix string, ownerId int, partnerId int) DotElemFields {
+	ownerIdStr := formatIntId(ownerId)
+	partnerIdStr := formatIntId(partnerId)
+	dotElemId := fmt.Sprintf("%s_%s_%s", prefix, ownerIdStr, partnerIdStr)
+	return DotElemFields{dotElemId, partnerIdStr}
+}
+
+// Fill HTML element IDs in string form
+// The ids are formatted as follows (examples):
+// Node => N00001 (N prefix)
+// DependsOn Connection Dot: D_N00008_N00005 (dot is carried by the first node N00008.
+// It depends on the second node N00005)
+// UsedBy Connection Dot: U_N00002_N00003 (dot is carried by the first node N00002.
+// It is used by the second node N00003)
+func fillElemIds(node *NodeData) {
+	nodeElemId := formatIntId(node.IntIdFields.Uid)
+	node.ElemFields.NodeElemId = nodeElemId
+
+	node.ElemFields.DependsOnDots = make([]DotElemFields, 0)
+	for _, dependsOnId := range node.IntIdFields.DependsOnIds {
+		dotElemFields := buildDotElemFields("D", node.IntIdFields.Uid, dependsOnId)
+		pushBack(&node.ElemFields.DependsOnDots, dotElemFields)
+	}
+
+	node.ElemFields.UsedByDots = make([]DotElemFields, 0)
+	for _, usedById := range node.IntIdFields.UsedByIds {
+		dotElemFields := buildDotElemFields("U", node.IntIdFields.Uid, usedById)
+		pushBack(&node.ElemFields.UsedByDots, dotElemFields)
+	}
+}
+
+// Fill HTML element IDs for all the nodes
+func fillElemIdsForAllNodes(nodes []NodeData) {
+	for idx, _ := range nodes {
+		fillElemIds(&nodes[idx])
+	}
+}
+
+// Each node gets a position, which will be set based on inline CSS.
+// It is a bit tricky since we want to center the alignment.
+func computeNodePositionsAndUpdate(displayConfig *DisplayConfigFields,
+	levelMap [][]int, nodes []NodeData) {
+
+	// To be used to calculate max shift and center aligning
+	maxNodesPerLevel := 0
+	for _, nodeIdsForLevel := range levelMap {
+		if len(nodeIdsForLevel) > maxNodesPerLevel {
+			maxNodesPerLevel = len(nodeIdsForLevel)
+		}
+	}
+
+	if maxNodesPerLevel == 0 {
+		return
+	}
+
+	hscale := displayConfig.HorizontalStepPx
+	// We can use levelMap to initialize the positions of nodes
+	for level, nodeIdsForLevel := range levelMap {
+		for shift, nodeId := range nodeIdsForLevel {
+			node := &nodes[nodeId]
+			// Horizontal centering shift
+			centering := ((maxNodesPerLevel - len(nodeIdsForLevel)) * hscale) / 2
+			node.ElemFields.LeftPx = shift*hscale + centering
+			node.ElemFields.TopPx = level * displayConfig.VerticalStepPx
+		}
+	}
+}
+
 // Do all the steps related to creating list of NodeData and filling all the fields.
 // This is the top level function which handles everything.
-func createComputeAndFillNodeDataList(gdfData *GdfData) ([]NodeData, error) {
+func createComputeAndFillNodeDataList(gdfData *GdfData) (ComputedGraphInfo, error) {
+	var graphInfo ComputedGraphInfo
 	nodeDataSeq := createNodeDataList(gdfData)
 
 	err := fillIntIdFields(nodeDataSeq)
 	if err != nil {
-		return nodeDataSeq, err
+		return graphInfo, err
 	}
 
 	err = computeLevels(nodeDataSeq)
 	if err != nil {
-		return nodeDataSeq, err
+		return graphInfo, err
 	}
 
-	return nodeDataSeq, nil
+	levelMap := computeShiftsAndGetLevelMap(nodeDataSeq)
+	fillElemIdsForAllNodes(nodeDataSeq)
+	computeNodePositionsAndUpdate(&gdfData.DisplayConfig, levelMap, nodeDataSeq)
+
+	graphInfo = ComputedGraphInfo{nodeDataSeq, levelMap}
+	return graphInfo, nil
 }
