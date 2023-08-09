@@ -1,0 +1,67 @@
+
+body {
+    background-color: hsl(205, 70%, 15%);
+    color: #eee;
+    font-family: Sans;
+}
+
+.board {
+    position: relative;
+    margin: 10px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 50px;
+}
+
+.node {
+    position: absolute;
+    z-index: 1;
+}
+
+a, a:link, a:visited, a:hover, a:active {
+  text-decoration: none;
+  color: inherit;
+}
+
+.node-content {
+    min-height: 80px;
+    background-color: hsla(205, 70%, 10%, 0.9);
+    text-align: center;
+    padding: 5px;
+}
+
+.node .title {
+    font-size: 1.2em;
+    margin: 5px
+}
+
+.node .subtitle {
+    font-size: 1em;
+    margin: 5px
+}
+
+.link-panel {
+    height: 20px;
+    display: flex;
+    width: 100%;
+    position:default;
+}
+
+.dot-outer {
+    flex-grow: 1;
+}
+
+
+.dot {
+    width: 20px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+    background-color: #444;
+    color: #eee;
+    border-radius: 10px;
+}
+
+.link-source {
+    /* its empty */
+}

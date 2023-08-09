@@ -31,13 +31,21 @@ func main() {
 		return
 	}
 
-	packedData, err := yaml.Marshal(nodes)
+	templateData := newTemplateData(gdfData, nodes)
+
+	packedData, err := yaml.Marshal(templateData)
 	if err != nil {
 		log.Printf("Error: %v\n", err)
 		return
 	}
 
-	err = os.WriteFile("/tmp/output.yaml", packedData, 0644)
+	err = os.WriteFile("tmp/template_data.yaml", packedData, 0644)
+	if err != nil {
+		log.Printf("Error: %v\n", err)
+		return
+	}
+
+	err = fillTemplateWriteOutput("assets/template.html", templateData, "tmp/output.html")
 	if err != nil {
 		log.Printf("Error: %v\n", err)
 		return

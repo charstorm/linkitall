@@ -45,19 +45,18 @@ type NodeInputFields struct {
 	DependsOn []string `yaml:"depends-on,omitempty"`
 }
 
-type GdfData struct {
+type GdfDataStruct struct {
 	Nodes         []NodeInputFields   `yaml:"nodes"`
 	HeadConfig    HeadConfigFields    `yaml:"head-config"`
 	DisplayConfig DisplayConfigFields `yaml:"display-config,omitempty"`
 }
 
 func validateAndUpdateDisplayConfig(displayConfig *DisplayConfigFields) error {
-	defaultGridStepPx := 400
 	if displayConfig.HorizontalStepPx == 0 {
-		displayConfig.HorizontalStepPx = defaultGridStepPx
+		displayConfig.HorizontalStepPx = 400
 	}
 	if displayConfig.VerticalStepPx == 0 {
-		displayConfig.VerticalStepPx = defaultGridStepPx
+		displayConfig.VerticalStepPx = 250
 	}
 	if displayConfig.NodeBoxWidthPx == 0 {
 		displayConfig.NodeBoxWidthPx = 300
@@ -68,7 +67,7 @@ func validateAndUpdateDisplayConfig(displayConfig *DisplayConfigFields) error {
 // Validate graph data loaded from YAML
 // Input must not be nil.
 // This function changes blank ("") value for node.Importance to "normal".
-func validateAndUpdateGraphData(data *GdfData) error {
+func validateAndUpdateGraphData(data *GdfDataStruct) error {
 	// Number of nodes without any dependencies (level 0 nodes)
 	numLevel0Nodes := 0
 	// Unique nodes (names)
@@ -132,7 +131,7 @@ func validateAndUpdateGraphData(data *GdfData) error {
 // data - loaded data (if everything goes fine)
 // readable - true if file is readable
 // error - error if any
-func loadGdf(filename string) (*GdfData, bool, error) {
+func loadGdf(filename string) (*GdfDataStruct, bool, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, false, err
@@ -144,7 +143,7 @@ func loadGdf(filename string) (*GdfData, bool, error) {
 		return nil, false, err
 	}
 
-	var data GdfData
+	var data GdfDataStruct
 	err = yaml.UnmarshalStrict(fileData, &data)
 	if err != nil {
 		return nil, true, err

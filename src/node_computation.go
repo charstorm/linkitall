@@ -1,4 +1,6 @@
-// This file handles the computation of various fields related to nodes
+// This file handles the computation of various fields related to nodes.
+// There are some more computations required for the final HTML generation. Those will be handled
+// by html_generation.go.
 package main
 
 import (
@@ -50,7 +52,7 @@ type NodeElemFields struct {
 	UsedByDots []DotElemFields
 	// Classes used by the node (HTML). This will be used to handle parameters like Importance.
 	Classes string
-	// Left edge pisition (px)
+	// Left edge position (px)
 	LeftPx int
 	// Top edge position (px)
 	TopPx int
@@ -68,15 +70,9 @@ type NodeData struct {
 	ElemFields NodeElemFields
 }
 
-// Display related computed quantities
-type ComputedDisplayFields struct {
-	CanvasWidthPx  int
-	CanvasHeightPx int
-}
-
 // Create a list of NodeData based on GDF data
 // Not handling the error.
-func createNodeDataList(gdfData *GdfData) []NodeData {
+func createNodeDataList(gdfData *GdfDataStruct) []NodeData {
 	// This will contain the final result
 	nodeDataSeq := make([]NodeData, 0, len(gdfData.Nodes))
 	for _, node := range gdfData.Nodes {
@@ -124,7 +120,7 @@ func fillIntIdFields(nodeDataSeq []NodeData) error {
 }
 
 // Initialization step of computeLevels algorithm
-// Assign level 0 to all nodes without depedencies. Everyone else gets an invalid level.
+// Assign level 0 to all nodes without dependencies. Everyone else gets an invalid level.
 // Keep the level 0 nodes in nextLevelNodeIds.
 func initializeForComputeLevels(nodes []NodeData, level0NodeIds *[]int) {
 	for idx := range nodes {
@@ -292,10 +288,18 @@ func formatIntId(id int) string {
 }
 
 // Build HTML field IDs used by the connection dots
+// D connections: D_OWNER_PARTNER
+// U connections: U_PARTNER_OWNER
 func buildDotElemFields(prefix string, ownerId int, partnerId int) DotElemFields {
 	ownerIdStr := formatIntId(ownerId)
 	partnerIdStr := formatIntId(partnerId)
-	dotElemId := fmt.Sprintf("%s_%s_%s", prefix, ownerIdStr, partnerIdStr)
+	first := ownerIdStr
+	second := partnerIdStr
+	if prefix == "U" {
+		first = partnerIdStr
+		second = ownerIdStr
+	}
+	dotElemId := fmt.Sprintf("%s_%s_%s", prefix, first, second)
 	return DotElemFields{dotElemId, partnerIdStr}
 }
 
@@ -304,8 +308,10 @@ func buildDotElemFields(prefix string, ownerId int, partnerId int) DotElemFields
 // Node => N00001 (N prefix)
 // DependsOn Connection Dot: D_N00008_N00005 (dot is carried by the first node N00008.
 // It depends on the second node N00005)
-// UsedBy Connection Dot: U_N00002_N00003 (dot is carried by the first node N00002.
-// It is used by the second node N00003)
+// UsedBy Connection Dot: U_N00003_N00002 (dot is carried by the first node N00002.
+// It is used by the second node N00003). Note that the order of nodes is reversed for
+// the UsedBy connection dot. This makes it easy to map one dot to another when making
+// connections. It is always the node on the top that comes first.
 func fillElemIds(node *NodeData) {
 	nodeElemId := formatIntId(node.IntIdFields.Uid)
 	node.ElemFields.NodeElemId = nodeElemId
@@ -347,6 +353,7 @@ func computeNodePositionsAndUpdate(displayConfig *DisplayConfigFields,
 		return
 	}
 
+	maxLevel := len(levelMap) - 1
 	hscale := displayConfig.HorizontalStepPx
 	// We can use levelMap to initialize the positions of nodes
 	for level, nodeIdsForLevel := range levelMap {
@@ -355,14 +362,14 @@ func computeNodePositionsAndUpdate(displayConfig *DisplayConfigFields,
 			// Horizontal centering shift
 			centering := ((maxNodesPerLevel - len(nodeIdsForLevel)) * hscale) / 2
 			node.ElemFields.LeftPx = shift*hscale + centering
-			node.ElemFields.TopPx = level * displayConfig.VerticalStepPx
+			node.ElemFields.TopPx = (maxLevel - level) * displayConfig.VerticalStepPx
 		}
 	}
 }
 
 // Do all the steps related to creating list of NodeData and filling all the fields.
 // This is the top level function which handles everything.
-func createComputeAndFillNodeDataList(gdfData *GdfData) ([]NodeData, error) {
+func createComputeAndFillNodeDataList(gdfData *GdfDataStruct) ([]NodeData, error) {
 	nodeDataSeq := createNodeDataList(gdfData)
 
 	err := fillIntIdFields(nodeDataSeq)

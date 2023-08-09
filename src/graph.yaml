@@ -10,12 +10,20 @@ nodes:
       depends-on:
           - fourier_series_d2c
           - laplace_transform
+          - generating_function
 
     - name: fourier_series_d2c
       title: Discrete to continous
       importance: low
       depends-on:
           - fourier_series
+    
+    - name: laplace_transform
+      title: Laplce Transform
+      subtitle: Continous version of Z-transform
+      depends-on:
+          - z_transform
+          - inner_product
 
     - name: fourier_series
       title: Fourier Series
@@ -31,12 +39,6 @@ nodes:
     - name: sine_and_cosine
       title: Sine and Cosine
       subtitle: Functions generated from circular motion
-
-    - name: laplace_transform
-      title: Laplce Transform
-      subtitle: Continous version of Z-transform
-      depends-on:
-          - z_transform
 
     - name: z_transform
       title: Z Transform

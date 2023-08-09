@@ -1,14 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>{{.HeadConfig.Title}}</title>
-    <meta name="description" content="{{.HeadConfig.Description}}" />
+    <title>{{.GdfData.HeadConfig.Title}}</title>
+    <meta name="description" content="{{.GdfData.HeadConfig.Description}}" />
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="author" content="{{.HeadConfig.Author}}">
+    <meta name="author" content="{{.GdfData.HeadConfig.Author}}">
     <link rel="stylesheet" href="assets/style.css?v=0">
     <link rel="icon" href="data:;base64,=">
+<style>
+.board {
+    width: {{.BoardConfig.Width}}px;
+    height: {{.BoardConfig.Height}}px;
+}
+.node {
+    width: {{.GdfData.DisplayConfig.NodeBoxWidthPx}}px;
+}
+</style>
 </head>
 <body>
+    <section id="app">
+        <div class="board" id="board">
+            {{range .Nodes}}
+            <div class="node" style="left: {{.ElemFields.LeftPx}}px; top: {{.ElemFields.TopPx}}px;">
+
+                <div class="link-panel">
+                    {{range .ElemFields.UsedByDots}}
+                    <div class="dot-outer">
+                        <div class="dot" id="{{.DotElemId}}">
+                            <a href="#{{.PartnerNodeId}}">+</a>
+                        </div>
+                    </div>
+                    {{end}}
+                </div>
+
+                <div class="node-content" id="{{.ElemFields.NodeElemId}}">
+                    <div class="title"> {{.InputFields.Title}} </div>
+                    {{ if ne (len .InputFields.Subtitle) 0 }}
+                    <div class="subtitle"> {{.InputFields.Subtitle}} </div>
+                    {{end}}
+                </div>
+
+                <div class="link-panel">
+                    {{range .ElemFields.DependsOnDots}}
+                    <div class="dot-outer">
+                        <div class="dot link-source" id="{{.DotElemId}}">
+                            <a href="#{{.PartnerNodeId}}">+</a>
+                        </div>
+                    </div>
+                    {{end}}
+                </div>
+
+            </div>
+            {{end}}
+        </div>
+    </section>
+    <script src="assets/main.js"></script>
+    <script src="assets/leader-line.min.js"></script>
 </body>
 </html>
