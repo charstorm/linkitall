@@ -74,16 +74,6 @@ type ComputedDisplayFields struct {
 	CanvasHeightPx int
 }
 
-// A struct with nodes and level info of nodes
-type ComputedGraphInfo struct {
-	// All the nodes in the graph
-	Nodes []NodeData
-	// A slice index based map that handles level to node-id
-	LevelMap [][]int
-	// For canvas and such (used for display)
-	// DisplayInfo ComputedDisplayFields
-}
-
 // Create a list of NodeData based on GDF data
 // Not handling the error.
 func createNodeDataList(gdfData *GdfData) []NodeData {
@@ -104,10 +94,10 @@ func fillIntIdFields(nodeDataSeq []NodeData) error {
 
 	// Fill Uid. Also report if node names are repeated. This may not be really required
 	// since there is already some error checking when reading the input data.
-	for idx, _ := range nodeDataSeq {
+	for idx := range nodeDataSeq {
 		node := &nodeDataSeq[idx]
 		if _, found := nodeName2Id[node.InputFields.Name]; found {
-			return fmt.Errorf("Node name repeated '%v'", node.InputFields.Name)
+			return fmt.Errorf("node name repeated '%v'", node.InputFields.Name)
 		}
 		nodeName2Id[node.InputFields.Name] = idx
 		node.IntIdFields.Uid = idx
@@ -117,12 +107,12 @@ func fillIntIdFields(nodeDataSeq []NodeData) error {
 	}
 
 	// Fill DependsOnIds and UsedByIds using nodeName2Id
-	for idx, _ := range nodeDataSeq {
+	for idx := range nodeDataSeq {
 		node := &nodeDataSeq[idx]
 		for _, depNodeName := range node.InputFields.DependsOn {
 			depNodeId, ok := nodeName2Id[depNodeName]
 			if !ok {
-				return fmt.Errorf("Dependency not found '%v'", depNodeName)
+				return fmt.Errorf("dependency not found '%v'", depNodeName)
 			}
 			pushBack(&node.IntIdFields.DependsOnIds, depNodeId)
 			depNode := &nodeDataSeq[depNodeId]
@@ -137,7 +127,7 @@ func fillIntIdFields(nodeDataSeq []NodeData) error {
 // Assign level 0 to all nodes without depedencies. Everyone else gets an invalid level.
 // Keep the level 0 nodes in nextLevelNodeIds.
 func initializeForComputeLevels(nodes []NodeData, level0NodeIds *[]int) {
-	for idx, _ := range nodes {
+	for idx := range nodes {
 		node := &nodes[idx]
 		// We set an invalid value here. This will be useful when checking if all nodes received
 		// a valid value.
@@ -172,7 +162,7 @@ func processCurrentNodesComputeLevels(nodes []NodeData, currentLevelNodeIds []in
 func validateComputeLevels(nodes []NodeData) error {
 	for _, node := range nodes {
 		if node.Position.Level == defaultInvalidLevel {
-			return fmt.Errorf("Unreachable node '%v'", node.InputFields.Name)
+			return fmt.Errorf("unreachable node '%v'", node.InputFields.Name)
 		}
 
 		// Every child must be at least 1 level above the current node
@@ -218,12 +208,12 @@ func validateComputeLevels(nodes []NodeData) error {
 // Maximum number of iterations = number of nodes.
 // At the end, perform sanity checks on the code (and coder)
 func computeLevels(nodes []NodeData) error {
-	currentLevelNodeIds := make([]int, 0, defaultCapacity)
+	var currentLevelNodeIds []int
 	nextLevelNodeIds := make([]int, 0, defaultCapacity)
 
 	initializeForComputeLevels(nodes, &nextLevelNodeIds)
 	if len(nextLevelNodeIds) == 0 {
-		return fmt.Errorf("Found no level 0 nodes!")
+		return fmt.Errorf("found no level 0 nodes")
 	}
 
 	// In the worse case, every node get a unique level.
@@ -253,7 +243,7 @@ func computeLevels(nodes []NodeData) error {
 // Compute shifts - This is straightforward. For every level, we go from left to right.
 // We can also compute levelMap with this function.
 func computeShiftsAndGetLevelMap(nodes []NodeData) [][]int {
-	levelMap := make([][]int, 0, 0)
+	levelMap := make([][]int, 0)
 	if len(nodes) == 0 {
 		return levelMap
 	}
@@ -268,7 +258,7 @@ func computeShiftsAndGetLevelMap(nodes []NodeData) [][]int {
 
 	if maxLevel < 0 {
 		// shows a bug in code
-		panic(fmt.Sprintf("Unable to find maxLevel"))
+		panic("Unable to find maxLevel")
 	}
 
 	// Initialize levelMap for each level
@@ -278,7 +268,7 @@ func computeShiftsAndGetLevelMap(nodes []NodeData) [][]int {
 	}
 
 	// Fill levelMap and shift based on each node level
-	for idx, _ := range nodes {
+	for idx := range nodes {
 		node := &nodes[idx]
 		level := node.Position.Level
 		node.Position.Shift = len(levelMap[level])
@@ -335,7 +325,7 @@ func fillElemIds(node *NodeData) {
 
 // Fill HTML element IDs for all the nodes
 func fillElemIdsForAllNodes(nodes []NodeData) {
-	for idx, _ := range nodes {
+	for idx := range nodes {
 		fillElemIds(&nodes[idx])
 	}
 }
@@ -372,24 +362,22 @@ func computeNodePositionsAndUpdate(displayConfig *DisplayConfigFields,
 
 // Do all the steps related to creating list of NodeData and filling all the fields.
 // This is the top level function which handles everything.
-func createComputeAndFillNodeDataList(gdfData *GdfData) (ComputedGraphInfo, error) {
-	var graphInfo ComputedGraphInfo
+func createComputeAndFillNodeDataList(gdfData *GdfData) ([]NodeData, error) {
 	nodeDataSeq := createNodeDataList(gdfData)
 
 	err := fillIntIdFields(nodeDataSeq)
 	if err != nil {
-		return graphInfo, err
+		return nodeDataSeq, err
 	}
 
 	err = computeLevels(nodeDataSeq)
 	if err != nil {
-		return graphInfo, err
+		return nodeDataSeq, err
 	}
 
 	levelMap := computeShiftsAndGetLevelMap(nodeDataSeq)
 	fillElemIdsForAllNodes(nodeDataSeq)
 	computeNodePositionsAndUpdate(&gdfData.DisplayConfig, levelMap, nodeDataSeq)
 
-	graphInfo = ComputedGraphInfo{nodeDataSeq, levelMap}
-	return graphInfo, nil
+	return nodeDataSeq, nil
 }

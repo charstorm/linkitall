@@ -1,16 +1,14 @@
 package main
 
-import "fmt"
-
 func pushBack[T any](array *[]T, object T) {
 	*array = append(*array, object)
 }
 
-func assertEqual[T comparable](expected, actual T) {
-	if expected != actual {
-		panic(fmt.Sprintf("Expected %v, got %v", expected, actual))
-	}
-}
+// func assertEqual[T comparable](expected, actual T) {
+// 	if expected != actual {
+// 		panic(fmt.Sprintf("Expected %v, got %v", expected, actual))
+// 	}
+// }
 
 func getUnique[T comparable](array []T) []T {
 	seen := make(map[T]bool)

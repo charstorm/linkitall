@@ -3,7 +3,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"regexp"
 
@@ -73,17 +73,17 @@ func validateAndUpdateGraphData(data *GdfData) error {
 	numLevel0Nodes := 0
 	// Unique nodes (names)
 	uniqueNames := map[string]bool{}
-	for idx, _ := range data.Nodes {
+	for idx := range data.Nodes {
 		node := &data.Nodes[idx]
 
 		// CHECK: node name must be [a-zA-Z0-9_]
 		if !name_pattern.MatchString(node.Name) {
-			return fmt.Errorf("Invalid node name (only letters, numbers, _) '%v'", node.Name)
+			return fmt.Errorf("invalid node name (only letters, numbers, _) '%v'", node.Name)
 		}
 
 		// CHECK: node name must be unique
 		if _, ok := uniqueNames[node.Name]; ok {
-			return fmt.Errorf("Node name repeated '%v'", node.Name)
+			return fmt.Errorf("node name repeated '%v'", node.Name)
 		}
 		uniqueNames[node.Name] = true
 
@@ -92,7 +92,7 @@ func validateAndUpdateGraphData(data *GdfData) error {
 		}
 		// CHECK: importance must be one of the 7 options
 		if !importance_pattern.MatchString(node.Importance) {
-			return fmt.Errorf("Unknown importance pattern for node '%v': '%v'",
+			return fmt.Errorf("unknown importance pattern for node '%v': '%v'",
 				node.Name, node.Importance)
 		}
 
@@ -103,14 +103,14 @@ func validateAndUpdateGraphData(data *GdfData) error {
 	}
 
 	if numLevel0Nodes == 0 {
-		return fmt.Errorf("These must be atleast 1 node without any dependency")
+		return fmt.Errorf("these must be atleast 1 node without any dependency")
 	}
 
 	for _, node := range data.Nodes {
 		for _, dep := range node.DependsOn {
 			// CHECK: dependency must be one of the node names
 			if _, ok := uniqueNames[dep]; !ok {
-				return fmt.Errorf("Unknown dependency for node '%v': '%v'", node.Name, dep)
+				return fmt.Errorf("unknown dependency for node '%v': '%v'", node.Name, dep)
 			}
 		}
 	}
@@ -139,7 +139,7 @@ func loadGdf(filename string) (*GdfData, bool, error) {
 	}
 	defer file.Close()
 
-	fileData, err := ioutil.ReadAll(file)
+	fileData, err := io.ReadAll(file)
 	if err != nil {
 		return nil, false, err
 	}
