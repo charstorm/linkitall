@@ -5,6 +5,8 @@ package main
 
 import (
 	"fmt"
+	"math"
+	"sort"
 )
 
 const defaultCapacity = 5
@@ -36,7 +38,17 @@ type DotElemFields struct {
 	DotElemId string
 	// HTML ID of the partner node (not the node holding the dot)
 	PartnerNodeId string
+	// only used for sorting
+	LinkAngle float64
 }
+
+type LinkDots []DotElemFields
+
+func (x LinkDots) Len() int { return len(x) }
+
+func (x LinkDots) Swap(i int, j int) { x[i], x[j] = x[j], x[i] }
+
+func (x LinkDots) Less(i int, j int) bool { return x[i].LinkAngle < x[j].LinkAngle }
 
 // For every node, we keep track of all the HTML data required.
 // IDs in this struct are strings which will be mapped to HTML element IDs.
@@ -300,7 +312,7 @@ func buildDotElemFields(prefix string, ownerId int, partnerId int) DotElemFields
 		second = ownerIdStr
 	}
 	dotElemId := fmt.Sprintf("%s_%s_%s", prefix, first, second)
-	return DotElemFields{dotElemId, partnerIdStr}
+	return DotElemFields{dotElemId, partnerIdStr, 0}
 }
 
 // Fill HTML element IDs in string form
@@ -367,6 +379,36 @@ func computeNodePositionsAndUpdate(displayConfig *DisplayConfigFields,
 	}
 }
 
+// Compute angle of the link given two nodes
+func computeLinkAngle(node1 *NodeData, node2 *NodeData) float64 {
+	hdiff := node2.ElemFields.LeftPx - node1.ElemFields.LeftPx
+	vdiff := node2.ElemFields.TopPx - node1.ElemFields.TopPx
+	angle := math.Atan2(float64(vdiff), float64(hdiff))
+	return angle
+}
+
+// We want to adjust the order of connection dots to minimize the amount of link crossings.
+// We do this by sorting them according to their angle one way or another.
+// Only to be called after computing the position!
+func sortDotsToUntangleLinks(nodes []NodeData) {
+	// Fill the LinkAngle for all nodes (dependson and usedby)
+	for idx := range nodes {
+		node1 := &nodes[idx]
+
+		for ii, id2 := range node1.IntIdFields.DependsOnIds {
+			node2 := &nodes[id2]
+			node1.ElemFields.DependsOnDots[ii].LinkAngle = -computeLinkAngle(node1, node2)
+		}
+		sort.Sort(LinkDots(node1.ElemFields.DependsOnDots))
+
+		for ii, id2 := range node1.IntIdFields.UsedByIds {
+			node2 := &nodes[id2]
+			node1.ElemFields.UsedByDots[ii].LinkAngle = computeLinkAngle(node1, node2)
+		}
+		sort.Sort(LinkDots(node1.ElemFields.UsedByDots))
+	}
+}
+
 // Do all the steps related to creating list of NodeData and filling all the fields.
 // This is the top level function which handles everything.
 func createComputeAndFillNodeDataList(gdfData *GdfDataStruct) ([]NodeData, error) {
@@ -385,6 +427,7 @@ func createComputeAndFillNodeDataList(gdfData *GdfDataStruct) ([]NodeData, error
 	levelMap := computeShiftsAndGetLevelMap(nodeDataSeq)
 	fillElemIdsForAllNodes(nodeDataSeq)
 	computeNodePositionsAndUpdate(&gdfData.DisplayConfig, levelMap, nodeDataSeq)
+	sortDotsToUntangleLinks(nodeDataSeq)
 
 	return nodeDataSeq, nil
 }

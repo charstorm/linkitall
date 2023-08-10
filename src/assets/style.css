@@ -1,6 +1,6 @@
 
 body {
-    background-color: hsl(205, 70%, 15%);
+    background: radial-gradient(circle at center, hsl(205, 70%, 16%), hsl(205, 70%, 7%));
     color: #eee;
     font-family: Sans;
 }
@@ -25,9 +25,11 @@ a, a:link, a:visited, a:hover, a:active {
 
 .node-content {
     min-height: 80px;
-    background-color: hsla(205, 70%, 10%, 0.9);
+    background-color: hsla(205, 70%, 10%, 0.95);
     text-align: center;
     padding: 5px;
+    border: 3px solid hsl(205, 50%, 20%);
+    border-radius: 10px;
 }
 
 .node .title {
@@ -41,7 +43,6 @@ a, a:link, a:visited, a:hover, a:active {
 }
 
 .link-panel {
-    height: 20px;
     display: flex;
     width: 100%;
     position:default;
