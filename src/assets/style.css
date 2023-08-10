@@ -1,8 +1,9 @@
 
 body {
-    background: radial-gradient(circle at center, hsl(205, 70%, 16%), hsl(205, 70%, 7%));
-    color: #eee;
+    /* background: radial-gradient(circle at center, hsl(205, 70%, 16%), hsl(205, 70%, 7%)); */
+    color: #ddd;
     font-family: Sans;
+    background-color: hsl(205, 60%, 15%);
 }
 
 .board {
@@ -10,7 +11,7 @@ body {
     margin: 10px;
     margin-left: auto;
     margin-right: auto;
-    margin-top: 50px;
+    margin-top: 80px;
 }
 
 .node {
@@ -25,10 +26,10 @@ a, a:link, a:visited, a:hover, a:active {
 
 .node-content {
     min-height: 80px;
-    background-color: hsla(205, 70%, 10%, 0.95);
+    background-color: hsla(205, 70%, 10%, 0.90);
     text-align: center;
     padding: 5px;
-    border: 3px solid hsl(205, 50%, 20%);
+    border: 2px solid hsl(205, 70%, 20%);
     border-radius: 10px;
 }
 
@@ -65,4 +66,9 @@ a, a:link, a:visited, a:hover, a:active {
 
 .link-source {
     /* its empty */
+}
+
+.highlighted-node {
+    border: 2px solid #ccc;
+    box-shadow: 0px 0px 20px #ccc;
 }

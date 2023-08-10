@@ -10,7 +10,7 @@ let links = []
 // Find all the link-source dots and connect them to their target dot.
 function connectDots() {
     // Template used to color links and their dots
-    const colorTemplate = "hsl({hue}, 40%, 60%)"
+    const colorTemplate = "hsl({hue}, 50%, 50%)"
     // we will cycle over different values of hue
     let hue = 0
     const linkSources = document.getElementsByClassName("link-source")
@@ -50,3 +50,15 @@ function main() {
 }
 
 document.addEventListener("DOMContentLoaded", main)
+
+// Focus on the target node
+function showNode(nodeId) {
+    const elem = document.getElementById(nodeId)
+    elem.scrollIntoView({behavior: "smooth", block: "center", inline: "center"})
+    elem.classList.add("highlighted-node")
+
+    // TODO: this looks so wrong. We need a *better* way to highligh a node.
+    setTimeout(() => {
+        elem.classList.remove("highlighted-node")
+    }, 1000)
+}

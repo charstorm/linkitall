@@ -28,7 +28,7 @@
                     {{range .ElemFields.UsedByDots}}
                     <div class="dot-outer">
                         <div class="dot" id="{{.DotElemId}}">
-                            <a href="#{{.PartnerNodeId}}">+</a>
+                            <a href="javascript:showNode('{{.PartnerNodeId}}')">+</a>
                         </div>
                     </div>
                     {{end}}
@@ -45,7 +45,7 @@
                     {{range .ElemFields.DependsOnDots}}
                     <div class="dot-outer">
                         <div class="dot link-source" id="{{.DotElemId}}">
-                            <a href="#{{.PartnerNodeId}}">+</a>
+                            <a href="javascript:showNode('{{.PartnerNodeId}}')">+</a>
                         </div>
                     </div>
                     {{end}}
