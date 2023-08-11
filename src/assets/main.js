@@ -1,4 +1,4 @@
-// This script is used by the generate HTML page containing the graph.
+// This script is used by the generated HTML page containing the graph.
 //
 // Thanks to:
 //   - https://anseki.github.io/leader-line/
@@ -51,7 +51,7 @@ function main() {
 
 document.addEventListener("DOMContentLoaded", main)
 
-// Focus on the target node
+// When clicking the link box, focus and show the target node.
 function showNode(nodeId) {
     const elem = document.getElementById(nodeId)
     elem.scrollIntoView({behavior: "smooth", block: "center", inline: "center"})

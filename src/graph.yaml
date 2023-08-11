@@ -5,8 +5,9 @@ head-config:
     author: Vinay Krishnan
 
 resources:
-    main:
-        file: resources/example.pdf
+    main: resources/example.pdf
+    wiki_laplace: https://en.wikipedia.org/wiki/Laplace_transform
+    test01: resources/test01.pdf
 
 nodes:
     - name: fourier_transform
@@ -14,7 +15,7 @@ nodes:
       subtitle: Projection of function onto a complex frequency function
       linkto:
           resource: main
-          target: 10
+          target: page=2
       depends-on:
           - fourier_series_d2c
           - laplace_transform
@@ -27,11 +28,13 @@ nodes:
           - fourier_series
       linkto:
           resource: main
-          target: 20
+          target: page=3
 
     - name: laplace_transform
       title: Laplce Transform
       subtitle: Continous version of Z-transform
+      linkto:
+          resource: wiki_laplace
       depends-on:
           - z_transform
           - inner_product
@@ -59,3 +62,6 @@ nodes:
 
     - name: generating_function
       title: Generating Function
+      linkto:
+          resource: test01
+          target: page=100

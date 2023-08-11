@@ -76,16 +76,8 @@ type NodeElemFields struct {
 	LeftPx int
 	// Top edge position (px)
 	TopPx int
-}
-
-// Fields used to link the node to resource
-type NodeResourceLinkFields struct {
-	/* The type of resource. "" if not resource is used */
-	Kind string
-	/* Path or link to the resource */
+	// Link to the associated resource
 	Link string
-	/* The target section or page in the resource */
-	Target string
 }
 
 // All the data corresponding to a node
@@ -98,8 +90,6 @@ type NodeData struct {
 	Position NodePositionFields
 	// HTML related fields (computed). Also handles positions on the HTML page.
 	ElemFields NodeElemFields
-	// Fields related to linking (as in html link) nodes to their resources (like a pdf file).
-	Resource NodeResourceLinkFields
 }
 
 // Create a list of NodeData based on GDF data
@@ -439,18 +429,15 @@ func computeResourceLinkFields(gdfData *GdfDataStruct, nodes []NodeData) error {
 		if len(node.InputFields.LinkTo.ResourceName) == 0 {
 			continue
 		}
-		nodeResource, ok := resourceConfig[node.InputFields.LinkTo.ResourceName]
+		link, ok := resourceConfig[node.InputFields.LinkTo.ResourceName]
 		if !ok {
 			return fmt.Errorf("error in node %s: linkto resource %s not found",
 				node.InputFields.Name, node.InputFields.LinkTo.ResourceName)
 		}
-		if nodeResource.Kind == "pdf" {
-			node.Resource = NodeResourceLinkFields{nodeResource.Kind,
-				nodeResource.File, node.InputFields.LinkTo.Target}
-		} else {
-			return fmt.Errorf("error in node %s: unknown resource kind %s",
-				node.InputFields.Name, nodeResource.Kind)
+		if len(node.InputFields.LinkTo.Target) > 0 {
+			link = fmt.Sprintf("%s#%s", link, node.InputFields.LinkTo.Target)
 		}
+		node.ElemFields.Link = link
 	}
 
 	return nil

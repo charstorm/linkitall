@@ -9,8 +9,6 @@ import (
 	"io"
 	"os"
 	"regexp"
-	"strconv"
-	"strings"
 
 	"gopkg.in/yaml.v2"
 )
@@ -35,14 +33,6 @@ type DisplayConfigFields struct {
 	NodeBoxWidthPx int `yaml:"node-box-width-px,omitempty"`
 }
 
-// Struct to handle resources
-type ResourceConfigFields struct {
-	// Kind: pdf, image, etc
-	Kind string `yaml:"kind,omitempty"`
-	// Path to file based on the base directory
-	File string `yaml:"file,omitempty"`
-}
-
 type LinkToFields struct {
 	// Resource name to be linked to
 	ResourceName string `yaml:"resource"`
@@ -50,7 +40,7 @@ type LinkToFields struct {
 	Target string `yaml:"target"`
 }
 
-type ResourceConfigMap map[string]ResourceConfigFields
+type ResourceConfigMap map[string]string
 
 // Defines the node definition by the user in the
 type NodeInputFields struct {
@@ -145,36 +135,16 @@ func validateAndUpdateNodes(nodes []NodeInputFields) error {
 // Also iterates over the nodes and makes sure all the resources are available.
 // TODO: check if the specified resource file actually exists!
 func validateAndUpdateResources(resources ResourceConfigMap, nodes []NodeInputFields) error {
-	// Check resources are of accepted type/kind
-	for key, resourceConfig := range resources {
-		if len(resourceConfig.File) == 0 {
-			return fmt.Errorf("error with resource %s: only pdf files accepted as of now", key)
-		}
-		if strings.HasSuffix(resourceConfig.File, ".pdf") {
-			resourceConfig.Kind = "pdf"
-		} else {
-			return fmt.Errorf("error with resource %s: only pdf files accepted as of now", key)
-		}
-		resources[key] = resourceConfig
-	}
-
 	// Check all nodes are using resources actually present in the GDF
 	for idx := range nodes {
 		node := &nodes[idx]
 		if len(node.LinkTo.ResourceName) == 0 {
 			continue
 		}
-		resourceInfo, ok := resources[node.LinkTo.ResourceName]
+		_, ok := resources[node.LinkTo.ResourceName]
 		if !ok {
 			return fmt.Errorf("error in node %s: linkto resource %s not found",
 				node.Name, node.LinkTo.ResourceName)
-		}
-		if resourceInfo.Kind == "pdf" {
-			_, err := strconv.Atoi(node.LinkTo.Target)
-			if err != nil {
-				return fmt.Errorf("error in node %s: linkto.Target %s cant be converted to int",
-					node.Name, node.LinkTo.Target)
-			}
 		}
 	}
 
