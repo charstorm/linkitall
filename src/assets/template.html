@@ -35,8 +35,12 @@
                 </div>
 
                 <div class="node-content" id="{{.ElemFields.NodeElemId}}">
-                    <div class="title"> {{.InputFields.Title}} </div>
-                    {{ if ne (len .InputFields.Subtitle) 0 }}
+                    <div class="title">
+                        <a href="javascript:openResource('{{.Resource.Kind}}', '{{.Resource.Link}}', '{{.Resource.Target}}')">
+                            {{.InputFields.Title}}
+                        </a>
+                    </div>
+                    {{if ne (len .InputFields.Subtitle) 0}}
                     <div class="subtitle"> {{.InputFields.Subtitle}} </div>
                     {{end}}
                 </div>

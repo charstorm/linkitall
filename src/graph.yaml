@@ -1,12 +1,20 @@
+
 head-config:
     title: Knowledge Graph of Mathematics
     description: This page contains the knowledge graph of whole of Mathematics
     author: Vinay Krishnan
 
+resources:
+    main:
+        file: resources/example.pdf
+
 nodes:
     - name: fourier_transform
       title: Fourier Transform
       subtitle: Projection of function onto a complex frequency function
+      linkto:
+          resource: main
+          target: 10
       depends-on:
           - fourier_series_d2c
           - laplace_transform
@@ -17,7 +25,10 @@ nodes:
       importance: low
       depends-on:
           - fourier_series
-    
+      linkto:
+          resource: main
+          target: 20
+
     - name: laplace_transform
       title: Laplce Transform
       subtitle: Continous version of Z-transform

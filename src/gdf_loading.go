@@ -1,4 +1,7 @@
 // This file handles the loading of Graph Definition File (GDF)
+// Contains loading of data to struct, checking input values, and filling optional fields.
+// Some of the checks may be redundant as similar checks may be present in modules that actually
+// use the data.
 package main
 
 import (
@@ -6,6 +9,8 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"strconv"
+	"strings"
 
 	"gopkg.in/yaml.v2"
 )
@@ -30,6 +35,23 @@ type DisplayConfigFields struct {
 	NodeBoxWidthPx int `yaml:"node-box-width-px,omitempty"`
 }
 
+// Struct to handle resources
+type ResourceConfigFields struct {
+	// Kind: pdf, image, etc
+	Kind string `yaml:"kind,omitempty"`
+	// Path to file based on the base directory
+	File string `yaml:"file,omitempty"`
+}
+
+type LinkToFields struct {
+	// Resource name to be linked to
+	ResourceName string `yaml:"resource"`
+	// A target for the final resource (page/section/div-id) etc.
+	Target string `yaml:"target"`
+}
+
+type ResourceConfigMap map[string]ResourceConfigFields
+
 // Defines the node definition by the user in the
 type NodeInputFields struct {
 	// A unique name for the node (no spaces, all small letters)
@@ -43,12 +65,15 @@ type NodeInputFields struct {
 	Importance string `yaml:"importance,omitempty"`
 	// List of node names (current node depends on these nodes)
 	DependsOn []string `yaml:"depends-on,omitempty"`
+	// Link to the resource
+	LinkTo LinkToFields `yaml:"linkto,omitempty"`
 }
 
 type GdfDataStruct struct {
-	Nodes         []NodeInputFields   `yaml:"nodes"`
-	HeadConfig    HeadConfigFields    `yaml:"head-config"`
-	DisplayConfig DisplayConfigFields `yaml:"display-config,omitempty"`
+	Nodes          []NodeInputFields   `yaml:"nodes"`
+	HeadConfig     HeadConfigFields    `yaml:"head-config"`
+	DisplayConfig  DisplayConfigFields `yaml:"display-config,omitempty"`
+	ResourceConfig ResourceConfigMap   `yaml:"resources"`
 }
 
 func validateAndUpdateDisplayConfig(displayConfig *DisplayConfigFields) error {
@@ -64,16 +89,15 @@ func validateAndUpdateDisplayConfig(displayConfig *DisplayConfigFields) error {
 	return nil
 }
 
-// Validate graph data loaded from YAML
-// Input must not be nil.
+// Validate data related to nodes in GDF
 // This function changes blank ("") value for node.Importance to "normal".
-func validateAndUpdateGraphData(data *GdfDataStruct) error {
+func validateAndUpdateNodes(nodes []NodeInputFields) error {
 	// Number of nodes without any dependencies (level 0 nodes)
 	numLevel0Nodes := 0
 	// Unique nodes (names)
 	uniqueNames := map[string]bool{}
-	for idx := range data.Nodes {
-		node := &data.Nodes[idx]
+	for idx := range nodes {
+		node := &nodes[idx]
 
 		// CHECK: node name must be [a-zA-Z0-9_]
 		if !name_pattern.MatchString(node.Name) {
@@ -105,7 +129,7 @@ func validateAndUpdateGraphData(data *GdfDataStruct) error {
 		return fmt.Errorf("these must be atleast 1 node without any dependency")
 	}
 
-	for _, node := range data.Nodes {
+	for _, node := range nodes {
 		for _, dep := range node.DependsOn {
 			// CHECK: dependency must be one of the node names
 			if _, ok := uniqueNames[dep]; !ok {
@@ -114,7 +138,63 @@ func validateAndUpdateGraphData(data *GdfDataStruct) error {
 		}
 	}
 
-	err := validateAndUpdateDisplayConfig(&data.DisplayConfig)
+	return nil
+}
+
+// Goes over each source in resources and makes sure the input is proper.
+// Also iterates over the nodes and makes sure all the resources are available.
+// TODO: check if the specified resource file actually exists!
+func validateAndUpdateResources(resources ResourceConfigMap, nodes []NodeInputFields) error {
+	// Check resources are of accepted type/kind
+	for key, resourceConfig := range resources {
+		if len(resourceConfig.File) == 0 {
+			return fmt.Errorf("error with resource %s: only pdf files accepted as of now", key)
+		}
+		if strings.HasSuffix(resourceConfig.File, ".pdf") {
+			resourceConfig.Kind = "pdf"
+		} else {
+			return fmt.Errorf("error with resource %s: only pdf files accepted as of now", key)
+		}
+		resources[key] = resourceConfig
+	}
+
+	// Check all nodes are using resources actually present in the GDF
+	for idx := range nodes {
+		node := &nodes[idx]
+		if len(node.LinkTo.ResourceName) == 0 {
+			continue
+		}
+		resourceInfo, ok := resources[node.LinkTo.ResourceName]
+		if !ok {
+			return fmt.Errorf("error in node %s: linkto resource %s not found",
+				node.Name, node.LinkTo.ResourceName)
+		}
+		if resourceInfo.Kind == "pdf" {
+			_, err := strconv.Atoi(node.LinkTo.Target)
+			if err != nil {
+				return fmt.Errorf("error in node %s: linkto.Target %s cant be converted to int",
+					node.Name, node.LinkTo.Target)
+			}
+		}
+	}
+
+	return nil
+}
+
+// Validate graph data loaded from YAML
+// Input must not be nil.
+func validateAndUpdateGraphData(data *GdfDataStruct) error {
+	err := validateAndUpdateNodes(data.Nodes)
+	if err != nil {
+		return err
+	}
+
+	err = validateAndUpdateDisplayConfig(&data.DisplayConfig)
+	if err != nil {
+		return err
+	}
+
+	err = validateAndUpdateResources(data.ResourceConfig, data.Nodes)
 	if err != nil {
 		return err
 	}

@@ -42,13 +42,21 @@ type DotElemFields struct {
 	LinkAngle float64
 }
 
+// Used to allow sorting of DotElemFields using to untangle links.
+// Len, Swap, and Less are defined below with the type.
 type LinkDots []DotElemFields
 
-func (x LinkDots) Len() int { return len(x) }
+func (x LinkDots) Len() int {
+	return len(x)
+}
 
-func (x LinkDots) Swap(i int, j int) { x[i], x[j] = x[j], x[i] }
+func (x LinkDots) Swap(i int, j int) {
+	x[i], x[j] = x[j], x[i]
+}
 
-func (x LinkDots) Less(i int, j int) bool { return x[i].LinkAngle < x[j].LinkAngle }
+func (x LinkDots) Less(i int, j int) bool {
+	return x[i].LinkAngle < x[j].LinkAngle
+}
 
 // For every node, we keep track of all the HTML data required.
 // IDs in this struct are strings which will be mapped to HTML element IDs.
@@ -70,6 +78,16 @@ type NodeElemFields struct {
 	TopPx int
 }
 
+// Fields used to link the node to resource
+type NodeResourceLinkFields struct {
+	/* The type of resource. "" if not resource is used */
+	Kind string
+	/* Path or link to the resource */
+	Link string
+	/* The target section or page in the resource */
+	Target string
+}
+
 // All the data corresponding to a node
 type NodeData struct {
 	// Fields coming from input
@@ -80,6 +98,8 @@ type NodeData struct {
 	Position NodePositionFields
 	// HTML related fields (computed). Also handles positions on the HTML page.
 	ElemFields NodeElemFields
+	// Fields related to linking (as in html link) nodes to their resources (like a pdf file).
+	Resource NodeResourceLinkFields
 }
 
 // Create a list of NodeData based on GDF data
@@ -409,6 +429,33 @@ func sortDotsToUntangleLinks(nodes []NodeData) {
 	}
 }
 
+// Fill the fields related to link to resource.
+// The gdf nodes initially only contain reference to the resource name.
+// We have to map them to real reference files/links.
+func computeResourceLinkFields(gdfData *GdfDataStruct, nodes []NodeData) error {
+	resourceConfig := gdfData.ResourceConfig
+	for idx := range nodes {
+		node := &nodes[idx]
+		if len(node.InputFields.LinkTo.ResourceName) == 0 {
+			continue
+		}
+		nodeResource, ok := resourceConfig[node.InputFields.LinkTo.ResourceName]
+		if !ok {
+			return fmt.Errorf("error in node %s: linkto resource %s not found",
+				node.InputFields.Name, node.InputFields.LinkTo.ResourceName)
+		}
+		if nodeResource.Kind == "pdf" {
+			node.Resource = NodeResourceLinkFields{nodeResource.Kind,
+				nodeResource.File, node.InputFields.LinkTo.Target}
+		} else {
+			return fmt.Errorf("error in node %s: unknown resource kind %s",
+				node.InputFields.Name, nodeResource.Kind)
+		}
+	}
+
+	return nil
+}
+
 // Do all the steps related to creating list of NodeData and filling all the fields.
 // This is the top level function which handles everything.
 func createComputeAndFillNodeDataList(gdfData *GdfDataStruct) ([]NodeData, error) {
@@ -428,6 +475,11 @@ func createComputeAndFillNodeDataList(gdfData *GdfDataStruct) ([]NodeData, error
 	fillElemIdsForAllNodes(nodeDataSeq)
 	computeNodePositionsAndUpdate(&gdfData.DisplayConfig, levelMap, nodeDataSeq)
 	sortDotsToUntangleLinks(nodeDataSeq)
+
+	err = computeResourceLinkFields(gdfData, nodeDataSeq)
+	if err != nil {
+		return nodeDataSeq, err
+	}
 
 	return nodeDataSeq, nil
 }
