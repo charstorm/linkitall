@@ -14,22 +14,24 @@ import (
 	"bufio"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	argparse "github.com/alexflint/go-arg"
 	copylib "github.com/otiai10/copy"
-	// "gopkg.in/yaml.v2"
 )
 
 type CliArgs struct {
-	ServerMode bool   `arg:"-s,--serve" help:"run in edit-update-serve mode"`
-	ServerPort string `arg:"-p,--port" default:"8101" help:"port to listen to in serve mode"`
-	InputDir   string `arg:"-i,--indir" help:"path to the input directory"`
+	ServerMode bool   `arg:"-s,--serve" required help:"run in edit-update-serve mode"`
+	ServerAddr string `arg:"-l,--listen" default:":8101" help:"listen address in serve mode"`
+	InputDir   string `arg:"-i,--indir,required" help:"path to the input directory"`
 }
 
 var bufferedStdin *bufio.Reader = bufio.NewReader(os.Stdin)
+var outputFilename string = "index.html"
 
 // Return path to the graph file.
 func getPathToGraphFile(indir string) string {
@@ -64,18 +66,23 @@ func isPathAccessible(path string, kind string) bool {
 
 // Parse arguments and perform steps to prepare input for processing.
 // If --indir is specified "?", get the input path from the user via stdin.
-// Final InputDir path is converted to absolute path. Also check whether the path exists.
+// Final InputDir path is converted to absolute path.
+// Check for existence of indir and graph file.
 func getInputsForProcessing() (CliArgs, error) {
 	var args CliArgs
+	if len(os.Args) == 1 {
+		fmt.Printf("No args. Use --help\n")
+		os.Exit(1)
+	}
 	argparse.MustParse(&args)
 
 	if args.InputDir == "?" {
-		fmt.Printf("Enter input directory: ")
+		fmt.Printf("Enter input directory => ")
 		line, err := bufferedStdin.ReadString('\n')
-		line = strings.TrimSpace(line)
 		if err != nil {
 			return args, err
 		}
+		line = strings.TrimSpace(line)
 		args.InputDir = line
 	}
 
@@ -162,7 +169,7 @@ func processGraphWriteOutput(indir string) error {
 
 	targetAssetDir := getPathToAssetDir(indir)
 	templateFile := filepath.Join(targetAssetDir, "template.html")
-	outputFile := filepath.Join(indir, "output.html")
+	outputFile := filepath.Join(indir, outputFilename)
 
 	log.Printf("Filling template and writing output\n")
 	err = fillTemplateWriteOutput(templateFile, templateData, outputFile)
@@ -170,8 +177,51 @@ func processGraphWriteOutput(indir string) error {
 		return err
 	}
 
-	log.Printf("Complete\n")
+	log.Printf("Done\n")
 	return nil
+}
+
+// Process the graph file. Print error if any.
+func processAndLogError(indir string) {
+	err := processGraphWriteOutput(indir)
+
+	if err != nil {
+		log.Printf("Error: %s", err)
+	}
+}
+
+// In server mode, we run a http server on the target directory (indir).
+// We also run a read-update cycle to update the output file.
+func runInServerMode(indir string, address string) {
+	// Run processing once before starting server
+	processAndLogError(indir)
+
+	// Start server on the target dir
+	fileServer := http.FileServer(http.Dir(indir))
+	go func() {
+		log.Printf("Starting server for dir %s. Listening at %s\n", indir, address)
+		http.ListenAndServe(address, fileServer)
+	}()
+
+	time.Sleep(time.Second)
+
+	// Run read-update cycle
+	for {
+		fmt.Printf("\nq: quit, enter: update output => ")
+		line, err := bufferedStdin.ReadString('\n')
+		if err != nil {
+			log.Fatalf("unable to read from stdin. %s", err)
+		}
+
+		line = strings.TrimSpace(line)
+		if line == "q" {
+			break
+		} else if len(line) > 0 {
+			log.Printf("Warning: Ignoring input: '%s'", line)
+			continue
+		}
+		processAndLogError(indir)
+	}
 }
 
 func main() {
@@ -192,6 +242,7 @@ func main() {
 	}
 
 	if args.ServerMode {
+		runInServerMode(args.InputDir, args.ServerAddr)
 	} else {
 		err = processGraphWriteOutput(args.InputDir)
 	}
