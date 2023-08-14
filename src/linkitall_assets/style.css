@@ -1,9 +1,9 @@
 
 body {
-    /* background: radial-gradient(circle at center, hsl(205, 70%, 16%), hsl(205, 70%, 7%)); */
+    background: radial-gradient(circle at center, hsl(205, 70%, 16%), hsl(205, 70%, 7%));
     color: #ddd;
     font-family: Sans;
-    background-color: hsl(205, 60%, 15%);
+    /* background-color: hsl(205, 60%, 15%); */
 }
 
 .board {
