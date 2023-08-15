@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"strings"
 )
 
 const defaultCapacity = 5
@@ -522,10 +523,17 @@ func computeResourceLinkFields(gdfData *GdfDataStruct, nodes []NodeData) error {
 			return fmt.Errorf("error in node %s: linkto resource %s not found",
 				node.InputFields.Name, node.InputFields.LinkTo.ResourceName)
 		}
+		updatedLink := link
 		if len(node.InputFields.LinkTo.Target) > 0 {
-			link = fmt.Sprintf("%s#%s", link, node.InputFields.LinkTo.Target)
+			updatedLink = fmt.Sprintf("%s#%s", link, node.InputFields.LinkTo.Target)
+			// HACK! for pdf document, we allow the link to have additional fields
+			// For example: ..some_doc.pdf#view=fit
+			// In this case, we have to add target as &target at the end.
+			if strings.Contains(link, ".pdf#") {
+				updatedLink = fmt.Sprintf("%s&%s", link, node.InputFields.LinkTo.Target)
+			}
 		}
-		node.ElemFields.Link = link
+		node.ElemFields.Link = updatedLink
 	}
 
 	return nil
