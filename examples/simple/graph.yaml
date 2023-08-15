@@ -1,0 +1,140 @@
+# THIS IS A SIMPLE EXAMPLE CREATED PURELY TO SHOWCASE THE FEATURES OF LINKITALL.
+# INFORMATION PROVIDED HERE IS NOT MEANT TO BE RELIABLE.
+
+# Build this using the following command:
+# -> cd path/to/linkitall/repo
+# -> linkitall -i examples/simple
+
+# These will be added to the <head> section of the page.
+head-config:
+    title: Tap Water
+    description: What is in tap water?
+    author: Vinay Krishnan
+
+algo-config:
+    # this can also be bottom2top (which is the default)
+    level-strategy: top2bottom
+
+resources:
+    # Page stored in resources locally. Nodes can 'linkto' this page.
+    # Make sure to copy the resources dir along with the html file if you take it somewhere else.
+    # Optionally, one can target a specific element id in the page using the target field.
+    main: resources/main.html
+    # It can be an external webpage as well
+    disinfectants_wiki: https://en.wikipedia.org/wiki/Disinfectant
+    # Local or web images work too
+    algae_image: resources/pexels-daria-klet-8479585.jpg
+    # Local or web pdf references also work. As target, use page=<page-no> (eg: page=10)
+    # (Note: #view=fit is not part of the filename. It is added to resize the pdf view)
+    microorganisms_pdf: resources/microorganisms.pdf#view=fit
+
+
+nodes:
+    - name: tap_water
+      title: Tap Water
+      linkto:
+          # resource defined in section resources
+          resource: main
+          # the id of the target section
+          target: tap-water
+      depends-on:
+          - pure_water
+          - impurities
+
+    - name: pure_water
+      title: Pure Water
+      linkto:
+          resource: main
+          target: pure-water
+
+    - name: impurities
+      title: Impurities
+      subtitle: Chemicals, Gases, Organisms
+      linkto:
+          resource: main
+          target: impurities
+      depends-on:
+          - dissolved_gases
+          - disinfectants
+          - natural_minerals
+          - microorganisms
+          - chemicals
+
+    - name: disinfectants
+      title: Disinfectants
+      subtitle: Most commonly Chlorine
+      linkto:
+          resource: disinfectants_wiki
+      depends-on:
+          - chlorine
+
+    - name: dissolved_gases
+      title: Dissolved Gases
+      linkto:
+          resource: main
+          target: dissolved-gases
+
+    - name: natural_minerals
+      title: Natural Minerals
+      linkto:
+          resource: main
+          target: natural-minerals
+
+    - name: chlorine
+      title: Chlorine
+      subtitle: Most common chemical in water treatment
+      linkto:
+          resource: main
+          target: chlorine
+
+    - name: microorganisms
+      title: Micro-organisms
+      subtitle: Tiny, yet sometimes harmful
+      linkto:
+          resource: main
+          target: microorganisms
+      depends-on:
+          - algae
+          - bacteria
+          - fungi
+          - protozoa
+          - viruses
+
+    - name: chemicals
+      title: Chemicals
+      subtitle: From various sources
+      linkto:
+          resource: main
+          target: chemicals
+
+    - name: algae
+      title: Algae
+      linkto:
+          # Using the image resource
+          resource: algae_image
+
+    - name: bacteria
+      title: Bacteria
+      linkto:
+          resource: microorganisms_pdf
+          target: page=2
+
+    - name: fungi
+      title: Fungi
+      subtitle: Has 'fun' in name.
+      linkto:
+          resource: microorganisms_pdf
+          target: page=3
+
+    - name: protozoa
+      title: Protozoa
+      subtitle: No idea what this is
+      linkto:
+          resource: microorganisms_pdf
+          target: page=4
+
+    - name: viruses
+      title: Viruses
+      linkto:
+          resource: microorganisms_pdf
+          target: page=5

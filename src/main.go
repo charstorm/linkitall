@@ -132,7 +132,7 @@ func copyAssetsFilesToDir(targetDir string, overwrite bool) error {
 	assetPath := getPathToAssetDir(execDir)
 	finalPath := getPathToAssetDir(targetDir)
 	if !overwrite && isPathAccessible(finalPath, "dir") {
-		log.Printf("Asset dir %s already exists. Skppping copying assets\n", finalPath)
+		log.Printf("Asset dir %s already exists. Skipping copying assets\n", finalPath)
 		return nil
 	}
 
