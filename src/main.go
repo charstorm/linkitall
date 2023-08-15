@@ -25,9 +25,10 @@ import (
 )
 
 type CliArgs struct {
-	ServerMode bool   `arg:"-s,--serve" required help:"run in edit-update-serve mode"`
+	ServerMode bool   `arg:"-s,--serve" help:"run in edit-update-serve mode"`
 	ServerAddr string `arg:"-l,--listen" default:":8101" help:"listen address in serve mode"`
 	InputDir   string `arg:"-i,--indir,required" help:"path to the input directory"`
+	Overwrite  bool   `arg:"--overwrite" help:"overwrite asset files"`
 }
 
 var bufferedStdin *bufio.Reader = bufio.NewReader(os.Stdin)
@@ -234,9 +235,7 @@ func main() {
 
 	// It doesn't matter whether we are running in server mode or not. We always copy the asset
 	// files to the target dir (input dir in this case).
-	// TODO: control this overwrite behavior from user input.
-	overwrite := false
-	err = copyAssetsFilesToDir(args.InputDir, overwrite)
+	err = copyAssetsFilesToDir(args.InputDir, args.Overwrite)
 	if err != nil {
 		log.Fatalf("unable to copy asset files to %s", args.InputDir)
 	}
