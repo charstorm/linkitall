@@ -141,16 +141,31 @@ func fillIntIdFields(nodeDataSeq []NodeData) error {
 	return nil
 }
 
-// Initialization step of computeLevels algorithm
-// Assign level 0 to all nodes without dependencies. Everyone else gets an invalid level.
-// Keep the level 0 nodes in nextLevelNodeIds.
-func initializeForComputeLevels(nodes []NodeData, level0NodeIds *[]int) {
+// Initialization step of computeLevels algorithm.
+// Assign level 0 to all nodes without the specified linked nodes.
+// Everyone else gets an invalid level.
+// Finally, keep the level 0 nodes in nextLevelNodeIds.
+// What linked nodes are considered depends on the strategy.
+//
+//	For bottom2top -> DependsOnIds
+//	For top2bottom -> UsedByIds
+func initializeForComputeLevels(strategy string, nodes []NodeData, level0NodeIds *[]int) {
 	for idx := range nodes {
 		node := &nodes[idx]
 		// We set an invalid value here. This will be useful when checking if all nodes received
 		// a valid value.
 		node.Position.Level = defaultInvalidLevel
-		if len(node.IntIdFields.DependsOnIds) == 0 {
+		// count to be used to decide level 0 nodes
+		level0DecisionCount := defaultInvalidLevel
+		switch strategy {
+		case "bottom2top":
+			level0DecisionCount = len(node.IntIdFields.DependsOnIds)
+		case "top2bottom":
+			level0DecisionCount = len(node.IntIdFields.UsedByIds)
+		default:
+			panic("unknown strategy for level initialization")
+		}
+		if level0DecisionCount == 0 {
 			// No dependencies -> level 0 (absolute bottom)
 			node.Position.Level = 0
 			pushBack(level0NodeIds, idx)
@@ -159,26 +174,47 @@ func initializeForComputeLevels(nodes []NodeData, level0NodeIds *[]int) {
 }
 
 // Process a single node in the computeLevels function.
-func processNodeComputeLevels(node *NodeData, nodes []NodeData, nextLevelNodeIds *[]int) {
-	childLevel := node.Position.Level + 1
-	for _, childNodeId := range node.IntIdFields.UsedByIds {
-		childNode := &nodes[childNodeId]
-		childNode.Position.Level = childLevel
-		pushBack(nextLevelNodeIds, childNodeId)
+func processNodeComputeLevels(strategy string, node *NodeData, nodes []NodeData,
+	nextLevelNodeIds *[]int) {
+	nextLevel := node.Position.Level + 1
+
+	var linkedNodeIds []int
+	switch strategy {
+	case "bottom2top":
+		linkedNodeIds = node.IntIdFields.UsedByIds
+	case "top2bottom":
+		linkedNodeIds = node.IntIdFields.DependsOnIds
+	default:
+		panic("unknown strategy for level initialization")
+	}
+
+	for _, linkedNodeId := range linkedNodeIds {
+		linkedNode := &nodes[linkedNodeId]
+		linkedNode.Position.Level = nextLevel
+		pushBack(nextLevelNodeIds, linkedNodeId)
 	}
 }
 
 // Go over all the current nodes and process them
-func processCurrentNodesComputeLevels(nodes []NodeData, currentLevelNodeIds []int,
+func processCurrentNodesComputeLevels(strategy string, nodes []NodeData, currentLevelNodeIds []int,
 	nextLevelNodeIds *[]int) {
 	for _, nodeId := range currentLevelNodeIds {
-		processNodeComputeLevels(&nodes[nodeId], nodes, nextLevelNodeIds)
+		processNodeComputeLevels(strategy, &nodes[nodeId], nodes, nextLevelNodeIds)
 	}
 }
 
 // Validate the result of computeLevels
-func validateComputeLevels(nodes []NodeData) error {
+func validateComputeLevels(strategy string, nodes []NodeData) error {
+	// Compute max-level
+	maxLevel := 0
 	for _, node := range nodes {
+		if node.Position.Level > maxLevel {
+			maxLevel = node.Position.Level
+		}
+	}
+
+	for _, node := range nodes {
+		// Every node must have a valid level
 		if node.Position.Level == defaultInvalidLevel {
 			return fmt.Errorf("unreachable node '%v'", node.InputFields.Name)
 		}
@@ -195,22 +231,69 @@ func validateComputeLevels(nodes []NodeData) error {
 			}
 		}
 
-		// A nodes level = max(level of all parents) + 1
-		maxParentLevel := -1
+		// Every parent should be at least 1 level below the current node
+		expectedMaxLevelForParent := node.Position.Level - 1
 		for _, parentNodeId := range node.IntIdFields.DependsOnIds {
 			parentNode := &nodes[parentNodeId]
-			if parentNode.Position.Level > maxParentLevel {
-				maxParentLevel = parentNode.Position.Level
+			if parentNode.Position.Level > expectedMaxLevelForParent {
+				// Shows a bug in the code
+				panic(fmt.Sprintf("Parent node level %v > expected level %v (child %v, parent %v)",
+					parentNode.Position.Level, expectedMaxLevelForParent,
+					node.InputFields.Name, parentNode.InputFields.Name))
 			}
 		}
-		if node.Position.Level != maxParentLevel+1 {
-			// Shows a bug in the code
-			panic(fmt.Sprintf("For node %v, mismatch in level. Got %v, expected %v",
-				node.InputFields.Name, node.Position.Level, maxParentLevel+1))
+
+		if strategy == "bottom2top" {
+			// A nodes level = max(level of all parents) + 1
+			maxParentLevel := -1
+			for _, parentNodeId := range node.IntIdFields.DependsOnIds {
+				parentNode := &nodes[parentNodeId]
+				if parentNode.Position.Level > maxParentLevel {
+					maxParentLevel = parentNode.Position.Level
+				}
+			}
+			if node.Position.Level != maxParentLevel+1 {
+				// Shows a bug in the code
+				panic(fmt.Sprintf("For node %v, mismatch in level. Got %v, expected %v",
+					node.InputFields.Name, node.Position.Level, maxParentLevel+1))
+			}
+		} else if strategy == "top2bottom" {
+			// A nodes level = min(level of all children) - 1
+			minChildLevel := maxLevel + 1
+			for _, childNodeId := range node.IntIdFields.UsedByIds {
+				childNode := &nodes[childNodeId]
+				if childNode.Position.Level < minChildLevel {
+					minChildLevel = childNode.Position.Level
+				}
+			}
+			if node.Position.Level != minChildLevel-1 {
+				// Shows a bug in the code
+				panic(fmt.Sprintf("For node %v, mismatch in level. Got %v, expected %v",
+					node.InputFields.Name, node.Position.Level, minChildLevel-1))
+			}
 		}
 	}
 
 	return nil
+}
+
+// Reverse node levels. Needed when using top2bottom strategy since the algorithm assigns
+// level 0 to the top most nodes.
+func reverseNodeLevels(nodes []NodeData) {
+	maxNodeLevel := 0
+	// get highest level
+	for idx := range nodes {
+		node := &nodes[idx]
+		if node.Position.Level > maxNodeLevel {
+			maxNodeLevel = node.Position.Level
+		}
+	}
+
+	// reduce node level from highest level to reverse levels
+	for idx := range nodes {
+		node := &nodes[idx]
+		node.Position.Level = maxNodeLevel - node.Position.Level
+	}
 }
 
 // Compute level for all the nodes.
@@ -225,11 +308,11 @@ func validateComputeLevels(nodes []NodeData) error {
 //
 // Maximum number of iterations = number of nodes.
 // At the end, perform sanity checks on the code (and coder)
-func computeLevels(nodes []NodeData) error {
+func computeLevels(strategy string, nodes []NodeData) error {
 	var currentLevelNodeIds []int
 	nextLevelNodeIds := make([]int, 0, defaultCapacity)
 
-	initializeForComputeLevels(nodes, &nextLevelNodeIds)
+	initializeForComputeLevels(strategy, nodes, &nextLevelNodeIds)
 	if len(nextLevelNodeIds) == 0 {
 		return fmt.Errorf("found no level 0 nodes")
 	}
@@ -246,11 +329,16 @@ func computeLevels(nodes []NodeData) error {
 		currentLevelNodeIds = nextLevelNodeIds
 		nextLevelNodeIds = make([]int, 0, defaultCapacity)
 
-		processCurrentNodesComputeLevels(nodes, currentLevelNodeIds, &nextLevelNodeIds)
+		processCurrentNodesComputeLevels(strategy, nodes, currentLevelNodeIds, &nextLevelNodeIds)
 		nextLevelNodeIds = getUnique(nextLevelNodeIds)
 	}
 
-	err := validateComputeLevels(nodes)
+	if strategy == "top2bottom" {
+		// In this strategy, we get the node levels reversed. We have to reverse the levels.
+		reverseNodeLevels(nodes)
+	}
+
+	err := validateComputeLevels(strategy, nodes)
 	if err != nil {
 		return err
 	}
@@ -453,7 +541,7 @@ func createComputeAndFillNodeDataList(gdfData *GdfDataStruct) ([]NodeData, error
 		return nodeDataSeq, err
 	}
 
-	err = computeLevels(nodeDataSeq)
+	err = computeLevels(gdfData.AlgoConfig.LevelStrategy, nodeDataSeq)
 	if err != nil {
 		return nodeDataSeq, err
 	}

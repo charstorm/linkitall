@@ -59,11 +59,26 @@ type NodeInputFields struct {
 	LinkTo LinkToFields `yaml:"linkto,omitempty"`
 }
 
+type AlgoConfigFields struct {
+	LevelStrategy string `yaml:"level-strategy,omitempty"`
+}
+
 type GdfDataStruct struct {
 	Nodes          []NodeInputFields   `yaml:"nodes"`
 	HeadConfig     HeadConfigFields    `yaml:"head-config"`
 	DisplayConfig  DisplayConfigFields `yaml:"display-config,omitempty"`
 	ResourceConfig ResourceConfigMap   `yaml:"resources"`
+	AlgoConfig     AlgoConfigFields    `yaml:"algo-config,omitempty"`
+}
+
+func validateAndUpdateAlgoConfig(algoConfig *AlgoConfigFields) error {
+	if len(algoConfig.LevelStrategy) == 0 {
+		algoConfig.LevelStrategy = "bottom2top"
+	}
+	if algoConfig.LevelStrategy != "bottom2top" && algoConfig.LevelStrategy != "top2bottom" {
+		return fmt.Errorf("invalid level strategy: '%v'", algoConfig.LevelStrategy)
+	}
+	return nil
 }
 
 func validateAndUpdateDisplayConfig(displayConfig *DisplayConfigFields) error {
@@ -160,6 +175,11 @@ func validateAndUpdateGraphData(data *GdfDataStruct) error {
 	}
 
 	err = validateAndUpdateDisplayConfig(&data.DisplayConfig)
+	if err != nil {
+		return err
+	}
+
+	err = validateAndUpdateAlgoConfig(&data.AlgoConfig)
 	if err != nil {
 		return err
 	}
