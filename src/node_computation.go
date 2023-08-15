@@ -465,14 +465,24 @@ func computeNodePositionsAndUpdate(displayConfig *DisplayConfigFields,
 	}
 
 	maxLevel := len(levelMap) - 1
-	hscale := displayConfig.HorizontalStepPx
+	horScale := displayConfig.HorizontalStepPx
+	levelHorScale := horScale
+	centering := 0
 	// We can use levelMap to initialize the positions of nodes
 	for level, nodeIdsForLevel := range levelMap {
+		if len(nodeIdsForLevel) == maxNodesPerLevel {
+			levelHorScale = horScale
+			centering = 0
+		} else {
+			ratio := float64(maxNodesPerLevel-1) / float64(len(nodeIdsForLevel))
+			levelHorScaleF64 := ratio * float64(horScale)
+			levelHorScale = int(levelHorScaleF64)
+			centering = int(levelHorScaleF64 / 2)
+		}
 		for shift, nodeId := range nodeIdsForLevel {
 			node := &nodes[nodeId]
 			// Horizontal centering shift
-			centering := ((maxNodesPerLevel - len(nodeIdsForLevel)) * hscale) / 2
-			node.ElemFields.LeftPx = shift*hscale + centering
+			node.ElemFields.LeftPx = shift*levelHorScale + centering
 			node.ElemFields.TopPx = (maxLevel - level) * displayConfig.VerticalStepPx
 		}
 	}
