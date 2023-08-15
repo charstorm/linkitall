@@ -35,18 +35,20 @@
                 </div>
 
                 <div class="node-content" id="{{.ElemFields.NodeElemId}}">
-                    <div class="title">
-                        {{if eq (len .ElemFields.Link) 0}}
-                        {{.InputFields.Title}}
-                        {{else}}
-                        <a href="{{.ElemFields.Link}}" target="_blank">
+                    <div class="node-content-inner">
+                        <div class="title">
+                            {{if eq (len .ElemFields.Link) 0}}
                             {{.InputFields.Title}}
-                        </a>
+                            {{else}}
+                            <a href="{{.ElemFields.Link}}" target="_blank">
+                                {{.InputFields.Title}}
+                            </a>
+                            {{end}}
+                        </div>
+                        {{if ne (len .InputFields.Subtitle) 0}}
+                        <div class="subtitle"> {{.InputFields.Subtitle}} </div>
                         {{end}}
                     </div>
-                    {{if ne (len .InputFields.Subtitle) 0}}
-                    <div class="subtitle"> {{.InputFields.Subtitle}} </div>
-                    {{end}}
                 </div>
 
                 <div class="link-panel">

@@ -1,6 +1,13 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
 body {
     background: radial-gradient(circle at center, hsl(205, 70%, 16%), hsl(205, 70%, 7%));
+    background-attachment: fixed;
+    background-repeat: no-repeat;
     color: #ddd;
     font-family: Sans;
     /* background-color: hsl(205, 60%, 15%); */
@@ -25,22 +32,31 @@ a, a:link, a:visited, a:hover, a:active {
 }
 
 .node-content {
+    position: relative;
     min-height: 80px;
     background-color: hsla(205, 70%, 10%, 0.90);
     text-align: center;
-    padding: 5px;
     border: 2px solid hsl(205, 70%, 20%);
     border-radius: 10px;
 }
 
+.node-content-inner {
+    position: absolute;
+    margin: auto;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 100%;
+}
+
 .node .title {
-    font-size: 1.2em;
+    font-size: 1.1em;
     margin: 5px
 }
 
 .node .subtitle {
-    font-size: 1em;
-    margin: 5px
+    font-size: 0.9em;
+    margin: 5px;
+    color: #aaa;
 }
 
 .link-panel {
