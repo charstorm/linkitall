@@ -63,6 +63,7 @@ a, a:link, a:visited, a:hover, a:active {
     display: flex;
     width: 100%;
     position:default;
+    min-height: 18px;
 }
 
 .dot-outer {
