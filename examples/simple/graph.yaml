@@ -42,13 +42,12 @@ nodes:
           - impurities
 
     - name: pure_water
-      title: Pure Water
+      # If title is not provided, it will be guessed based on name
       linkto:
           resource: main
           target: pure-water
 
     - name: impurities
-      title: Impurities
       subtitle: Chemicals, Gases, Organisms
       linkto:
           resource: main
@@ -61,7 +60,6 @@ nodes:
           - chemicals
 
     - name: disinfectants
-      title: Disinfectants
       subtitle: Most commonly Chlorine
       linkto:
           resource: disinfectants_wiki
@@ -69,13 +67,11 @@ nodes:
           - chlorine
 
     - name: dissolved_gases
-      title: Dissolved Gases
       linkto:
           resource: main
           target: dissolved-gases
 
     - name: natural_minerals
-      title: Natural Minerals
       linkto:
           resource: main
           target: natural-minerals

@@ -9,7 +9,10 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"strings"
 
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"gopkg.in/yaml.v2"
 )
 
@@ -94,6 +97,15 @@ func validateAndUpdateDisplayConfig(displayConfig *DisplayConfigFields) error {
 	return nil
 }
 
+// Replace underscores with spaces and capitalize first letter of every word.
+func convertNameToTitle(name string) string {
+	spacedStr := strings.ReplaceAll(name, "_", " ")
+	// We have to do some extra-steps to do since strings.Title is deprecated. :eyeroll:
+	caser := cases.Title(language.English)
+	result := caser.String(spacedStr)
+	return result
+}
+
 // Validate data related to nodes in GDF
 // This function changes blank ("") value for node.Importance to "normal".
 func validateAndUpdateNodes(nodes []NodeInputFields) error {
@@ -127,6 +139,11 @@ func validateAndUpdateNodes(nodes []NodeInputFields) error {
 		if len(node.DependsOn) == 0 {
 			// These nodes do not depend on any nodes
 			numLevel0Nodes += 1
+		}
+
+		// If the title is not given, fill it using the name.
+		if len(node.Title) == 0 {
+			node.Title = convertNameToTitle(node.Name)
 		}
 	}
 
