@@ -24,20 +24,18 @@ import (
 	copylib "github.com/otiai10/copy"
 )
 
+// Some fields (GraphFile, OutFile) are basepaths (just the filename without dir).
+// For these, full path is attached by the getInputsForProcessing() function.
 type CliArgs struct {
 	ServerMode bool   `arg:"-s,--serve" help:"run in edit-update-serve mode"`
 	ServerAddr string `arg:"-l,--listen" default:":8101" help:"listen address in serve mode"`
 	InputDir   string `arg:"-i,--indir,required" help:"path to the input directory"`
+	GraphFile  string `arg:"-g,--graph" default:"graph.yaml" help:"input graph base filename"`
+	OutFile    string `arg:"-o,--out" default:"index.html" help:"output html base filename"`
 	Overwrite  bool   `arg:"--overwrite" help:"overwrite asset files"`
 }
 
 var bufferedStdin *bufio.Reader = bufio.NewReader(os.Stdin)
-var outputFilename string = "index.html"
-
-// Return path to the graph file.
-func getPathToGraphFile(indir string) string {
-	return filepath.Join(indir, "graph.yaml")
-}
 
 // Return path to the assets directory inside indir
 func getPathToAssetDir(indir string) string {
@@ -63,6 +61,16 @@ func isPathAccessible(path string, kind string) bool {
 		}
 	}
 	return result
+}
+
+// Check if file can be written
+func canFileWrite(path string) bool {
+	file, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE, 0644)
+	if err != nil {
+		return false
+	}
+	file.Close()
+	return true
 }
 
 // Parse arguments and perform steps to prepare input for processing.
@@ -97,9 +105,14 @@ func getInputsForProcessing() (CliArgs, error) {
 	}
 
 	args.InputDir = absInputDir
-	graphFile := getPathToGraphFile(args.InputDir)
-	if !isPathAccessible(graphFile, "file") {
-		return args, fmt.Errorf("unable to find graph file: %s", graphFile)
+	args.GraphFile = filepath.Join(args.InputDir, args.GraphFile)
+	if !isPathAccessible(args.GraphFile, "file") {
+		return args, fmt.Errorf("unable to find graph file: %s", args.GraphFile)
+	}
+	// Fill full path to input and output
+	args.OutFile = filepath.Join(args.InputDir, args.OutFile)
+	if !canFileWrite(args.OutFile) {
+		return args, fmt.Errorf("unable to open file for writing: %s", args.OutFile)
 	}
 
 	return args, nil
@@ -145,13 +158,11 @@ func copyAssetsFilesToDir(targetDir string, overwrite bool) error {
 // Process Graph Data File (GDF) and writes the HTML output.
 // The `indir` is also the target dir. Output is generated at the same location.
 // Copy the required asset dir to the `indir` before calling this function.
-func processGraphWriteOutput(indir string) error {
-	graphFile := getPathToGraphFile(indir)
-
-	log.Printf("Reading graph: %s\n", graphFile)
-	gdfData, readable, err := loadGdf(graphFile)
+func processGraphWriteOutput(args *CliArgs) error {
+	log.Printf("Reading graph: %s\n", args.GraphFile)
+	gdfData, readable, err := loadGdf(args.GraphFile)
 	if !readable {
-		log.Fatalf("graph file %s not readable: %s\n", graphFile, err)
+		log.Fatalf("graph file %s not readable: %s\n", args.GraphFile, err)
 	}
 
 	if err != nil {
@@ -168,12 +179,11 @@ func processGraphWriteOutput(indir string) error {
 	log.Printf("Generating template data\n")
 	templateData := newTemplateData(gdfData, nodes)
 
-	targetAssetDir := getPathToAssetDir(indir)
+	targetAssetDir := getPathToAssetDir(args.InputDir)
 	templateFile := filepath.Join(targetAssetDir, "template.html")
-	outputFile := filepath.Join(indir, outputFilename)
 
 	log.Printf("Filling template and writing output\n")
-	err = fillTemplateWriteOutput(templateFile, templateData, outputFile)
+	err = fillTemplateWriteOutput(templateFile, templateData, args.OutFile)
 	if err != nil {
 		return err
 	}
@@ -183,25 +193,26 @@ func processGraphWriteOutput(indir string) error {
 }
 
 // Process the graph file. Print error if any.
-func processAndLogError(indir string) {
-	err := processGraphWriteOutput(indir)
+func processAndLogError(args *CliArgs) {
+	err := processGraphWriteOutput(args)
 
 	if err != nil {
 		log.Printf("Error: %s", err)
 	}
 }
 
-// In server mode, we run a http server on the target directory (indir).
+// In server mode, we run a http server on the target directory.
 // We also run a read-update cycle to update the output file.
-func runInServerMode(indir string, address string) {
+func runInServerMode(args *CliArgs) {
 	// Run processing once before starting server
-	processAndLogError(indir)
+	processAndLogError(args)
 
 	// Start server on the target dir
-	fileServer := http.FileServer(http.Dir(indir))
+	fileServer := http.FileServer(http.Dir(args.InputDir))
 	go func() {
-		log.Printf("Starting server for dir %s. Listening at %s\n", indir, address)
-		http.ListenAndServe(address, fileServer)
+		log.Printf("Starting server for dir %s. Listening at %s\n",
+			args.InputDir, args.ServerAddr)
+		http.ListenAndServe(args.ServerAddr, fileServer)
 	}()
 
 	time.Sleep(time.Second)
@@ -221,7 +232,7 @@ func runInServerMode(indir string, address string) {
 			log.Printf("Warning: Ignoring input: '%s'", line)
 			continue
 		}
-		processAndLogError(indir)
+		processAndLogError(args)
 	}
 }
 
@@ -241,9 +252,9 @@ func main() {
 	}
 
 	if args.ServerMode {
-		runInServerMode(args.InputDir, args.ServerAddr)
+		runInServerMode(&args)
 	} else {
-		err = processGraphWriteOutput(args.InputDir)
+		err = processGraphWriteOutput(&args)
 	}
 
 	if err != nil {
