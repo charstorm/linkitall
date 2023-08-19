@@ -33,7 +33,7 @@ a, a:link, a:visited, a:hover, a:active {
 
 .node-content {
     position: relative;
-    min-height: 80px;
+    min-height: 100px;
     background-color: hsla(205, 70%, 10%, 0.90);
     text-align: center;
     border: 2px solid hsl(205, 70%, 20%);

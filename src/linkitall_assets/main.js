@@ -65,7 +65,7 @@ function showNode(nodeId) {
     // TODO: this looks so wrong. We need a *better* way to highlight a node.
     setTimeout(() => {
         elem.classList.remove("highlighted-node")
-    }, 1000)
+    }, 1500)
 }
 
 // Use state=true to enable link-view-panel and state=false to hide it.

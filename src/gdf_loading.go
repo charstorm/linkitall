@@ -89,7 +89,7 @@ func validateAndUpdateDisplayConfig(displayConfig *DisplayConfigFields) error {
 		displayConfig.HorizontalStepPx = 400
 	}
 	if displayConfig.VerticalStepPx == 0 {
-		displayConfig.VerticalStepPx = 250
+		displayConfig.VerticalStepPx = 300
 	}
 	if displayConfig.NodeBoxWidthPx == 0 {
 		displayConfig.NodeBoxWidthPx = 300
