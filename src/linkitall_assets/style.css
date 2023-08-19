@@ -49,12 +49,12 @@ a, a:link, a:visited, a:hover, a:active {
 }
 
 .node .title {
-    font-size: 1.1em;
+    font-size: 1.2em;
     margin: 5px
 }
 
 .node .subtitle {
-    font-size: 0.9em;
+    font-size: 1em;
     margin: 5px;
     color: #aaa;
 }
@@ -88,3 +88,31 @@ a, a:link, a:visited, a:hover, a:active {
     border: 2px solid #ccc;
     box-shadow: 0px 0px 20px #ccc;
 }
+
+#link-view-panel {
+    z-index: 2;
+    display: none;
+    position: fixed;
+    top: 0px;
+    left: 0;
+    right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    width: 0px;
+}
+
+#link-view-panel .close-button {
+    margin-top: 10px;
+    margin-bottom: 5px;
+    min-width: 100px;
+    font-size: 1em;
+    transform: translateX(-50%);
+}
+
+#link-view-panel iframe {
+    overflow: scroll;
+    transform: translateX(-50%);
+    background-color: #000;
+    border: 2px solid hsl(205, 70%, 20%);
+}
+

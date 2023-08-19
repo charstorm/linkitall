@@ -20,6 +20,11 @@
 </head>
 <body>
     <section id="app">
+        <div id="link-view-panel">
+            <button class="close-button" onclick="closeLinkViewPanel()">Close (Esc)</button>
+            <div id="link-view-inner">
+            </div>
+        </div>
         <div class="board" id="board">
             {{range .Nodes}}
             <div class="node" style="left: {{.ElemFields.LeftPx}}px; top: {{.ElemFields.TopPx}}px;">
@@ -40,7 +45,7 @@
                             {{if eq (len .ElemFields.Link) 0}}
                             {{.InputFields.Title}}
                             {{else}}
-                            <a href="{{.ElemFields.Link}}" target="_blank">
+                            <a href="javascript:openNodeLink('{{.ElemFields.Link}}')">
                                 {{.InputFields.Title}}
                             </a>
                             {{end}}

@@ -7,6 +7,11 @@
 
 let links = []
 
+// just renaming the function to a simpler one
+function id2el(idstr) {
+    return document.getElementById(idstr)
+}
+
 // Find all the link-source dots and connect them to their target dot.
 function connectDots() {
     // Template used to color links and their dots
@@ -24,7 +29,7 @@ function connectDots() {
         }
 
         const targetId = sourceId.replace(/^D_/, "U_")
-        const target = document.getElementById(targetId)
+        const target = id2el(targetId)
         if (target == null) {
             console.log(`ERROR: no target dot with id ${targetId}`)
             continue
@@ -53,12 +58,69 @@ document.addEventListener("DOMContentLoaded", main)
 
 // When clicking the link box, focus and show the target node.
 function showNode(nodeId) {
-    const elem = document.getElementById(nodeId)
+    const elem = id2el(nodeId)
     elem.scrollIntoView({behavior: "smooth", block: "center", inline: "center"})
     elem.classList.add("highlighted-node")
 
-    // TODO: this looks so wrong. We need a *better* way to highligh a node.
+    // TODO: this looks so wrong. We need a *better* way to highlight a node.
     setTimeout(() => {
         elem.classList.remove("highlighted-node")
     }, 1000)
+}
+
+// Use state=true to enable link-view-panel and state=false to hide it.
+function setLinkViewPatelState(state) {
+    let linkViewOuterElem = id2el("link-view-panel")
+    if (state) {
+        linkViewOuterElem.style.zIndex = "3"
+        linkViewOuterElem.style.display = "block"
+    } else if (id2el("link-view-panel").style.display != "none") {
+        linkViewOuterElem.style.zIndex = "-1"
+        linkViewOuterElem.style.display = "none"
+    }
+}
+
+var currentLinkViewUrl = ""
+
+// Open panel for viewing the target url.
+// If we open the same link again, reuse the iframe.
+function openNodeLink(url) {
+    if (url == currentLinkViewUrl) {
+        setLinkViewPatelState(true)
+        return
+    }
+
+    let inner = id2el("link-view-inner")
+    inner.textContent = ""
+
+    let panel = id2el("link-view-panel")
+    let height = window.innerHeight - 100
+    let width = Math.floor(window.innerWidth * 0.8)
+    if (width < 800) {
+        width = 800
+    }
+
+    // Open link in an iframe and insert it into the inner div
+    let iframe = document.createElement("iframe")
+    iframe.src = url
+    iframe.width = `${width}px`
+    iframe.height = `${height}px`
+    iframe.frameBorder="0"
+    iframe.onload = () => {
+        setLinkViewPatelState(true)
+    }
+    inner.appendChild(iframe)
+    currentLinkViewUrl = url
+}
+
+function closeLinkViewPanel() {
+    setLinkViewPatelState(false)
+}
+
+// Handle escape keypress.
+// Close the link view panel when pressing escape.
+document.onkeydown = function(evt) {
+    if(evt.key === "Escape") {
+        closeLinkViewPanel()
+    }
 }
