@@ -15,7 +15,7 @@ function id2el(idstr) {
 // Find all the link-source dots and connect them to their target dot.
 function connectDots() {
     // Template used to color links and their dots
-    const colorTemplate = "hsl({hue}, 50%, 50%)"
+    const colorTemplate = "hsl({hue}, 40%, 50%)"
     // we will cycle over different values of hue
     let hue = 0
     const linkSources = document.getElementsByClassName("link-source")
@@ -37,7 +37,7 @@ function connectDots() {
 
         // Color for this link
         let color = colorTemplate.replace("{hue}", hue.toString())
-        hue = (hue + 43) % 360
+        hue = (hue + 67) % 360
         source.style.backgroundColor = color
         target.style.backgroundColor = color
 

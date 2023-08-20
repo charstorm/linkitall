@@ -5,12 +5,11 @@
 }
 
 body {
-    background: radial-gradient(circle at center, hsl(205, 70%, 16%), hsl(205, 70%, 7%));
     background-attachment: fixed;
     background-repeat: no-repeat;
     color: #ddd;
     font-family: Sans;
-    /* background-color: hsl(205, 60%, 15%); */
+    background-color: hsl(205, 0%, 17%);
 }
 
 .board {
@@ -34,9 +33,9 @@ a, a:link, a:visited, a:hover, a:active {
 .node-content {
     position: relative;
     min-height: 100px;
-    background-color: hsla(205, 70%, 10%, 0.90);
+    background-color: hsla(205, 0%, 13%);
     text-align: center;
-    border: 2px solid hsl(205, 70%, 20%);
+    border: 2px solid hsl(50, 0%, 20%);
     border-radius: 10px;
 }
 
@@ -51,12 +50,13 @@ a, a:link, a:visited, a:hover, a:active {
 .node .title {
     font-size: 1.2em;
     margin: 5px
+    color: #eee;
 }
 
 .node .subtitle {
     font-size: 1em;
     margin: 5px;
-    color: #aaa;
+    color: hsl(50, 0%, 50%);
 }
 
 .link-panel {
@@ -113,6 +113,6 @@ a, a:link, a:visited, a:hover, a:active {
     overflow: scroll;
     transform: translateX(-50%);
     background-color: #000;
-    border: 2px solid hsl(205, 70%, 20%);
+    box-shadow: 0px 0px 40px #000;
 }
 

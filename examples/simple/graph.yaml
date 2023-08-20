@@ -117,7 +117,7 @@ nodes:
 
     - name: fungi
       title: Fungi
-      subtitle: Has 'fun' in name.
+      subtitle: Has 'fun' in name
       linkto:
           resource: microorganisms_pdf
           target: page=3
