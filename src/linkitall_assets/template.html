@@ -45,7 +45,9 @@
                             {{if eq (len .ElemFields.Link) 0}}
                             {{.InputFields.Title}}
                             {{else}}
-                            <a href="javascript:openNodeLink('{{.ElemFields.Link}}')">
+                            <a href="javascript:void(0)"
+                               onauxclick="openNodeLink(event, '{{.ElemFields.Link}}', true)"
+                               onclick="openNodeLink(event, '{{.ElemFields.Link}}', false)">
                                 {{.InputFields.Title}}
                             </a>
                             {{end}}

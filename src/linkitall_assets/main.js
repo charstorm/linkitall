@@ -84,7 +84,15 @@ var currentLinkViewUrl = ""
 
 // Open panel for viewing the target url.
 // If we open the same link again, reuse the iframe.
-function openNodeLink(url) {
+function openNodeLink(evt, url, aux) {
+    evt.preventDefault()
+
+    // In case of middle-click or ctrl-click, open link in a new tab
+    if (aux || (evt.ctrlKey == true)) {
+        window.open(url, "newTab")
+        return
+    }
+
     if (url == currentLinkViewUrl) {
         setLinkViewPatelState(true)
         return
@@ -93,7 +101,6 @@ function openNodeLink(url) {
     let inner = id2el("link-view-inner")
     inner.textContent = ""
 
-    let panel = id2el("link-view-panel")
     let height = window.innerHeight - 100
     let width = Math.floor(window.innerWidth * 0.8)
     if (width < 800) {
@@ -124,3 +131,5 @@ document.onkeydown = function(evt) {
         closeLinkViewPanel()
     }
 }
+
+
