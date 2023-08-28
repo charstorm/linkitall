@@ -6,10 +6,21 @@
 // Note: These entities are not associated with the project.
 
 let links = []
+let imgWidth = "60%"
 
 // just renaming the function to a simpler one
 function id2el(idstr) {
     return document.getElementById(idstr)
+}
+
+function getBaseUrl(url) {
+    return url.split(/[?#]/)[0]
+}
+
+function isImageFile(filename) {
+  let checkExt = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg']
+  let lowerFilename = filename.toLowerCase()
+  return checkExt.some(ext => lowerFilename.endsWith(ext))
 }
 
 // Find all the link-source dots and connect them to their target dot.
@@ -84,6 +95,51 @@ function setLinkViewPatelState(state) {
 
 var currentLinkViewUrl = ""
 
+function getWidthAndHeightForFrame() {
+    let height = window.innerHeight - 100
+    let width = Math.floor(window.innerWidth * 0.8)
+    if (width < 800) {
+        width = 800
+    }
+    return [width, height]
+}
+
+function withpx(val) {
+    return `${val}px`
+}
+
+function openInIframe(url, targetParent) {
+    let [width, height] = getWidthAndHeightForFrame()
+
+    // Open link in an iframe and insert it into the inner div
+    let iframe = document.createElement("iframe")
+    iframe.src = url
+    iframe.width = withpx(width)
+    iframe.height = withpx(height)
+    iframe.frameBorder="0"
+    iframe.onload = () => {
+        setLinkViewPatelState(true)
+        iframe.focus()
+        currentLinkViewUrl = url
+    }
+    targetParent.appendChild(iframe)
+}
+
+function openInDiv(url, targetParent) {
+    let [width, height] = getWidthAndHeightForFrame()
+
+    targetParent.innerHTML = `
+        <div id="div-frame" class="div-frame">
+            <img id="frame-img" src="${url}" width="${imgWidth}"/>
+        </div>
+    `
+    let divFrame = id2el("div-frame")
+    divFrame.style.width = withpx(width)
+    divFrame.style.height = withpx(height)
+
+    setLinkViewPatelState(true)
+}
+
 // Open panel for viewing the target url.
 // If we open the same link again, reuse the iframe.
 function openNodeLink(evt, url, aux) {
@@ -100,32 +156,43 @@ function openNodeLink(evt, url, aux) {
         return
     }
 
+    // clear contents of the link-view-inner
     let inner = id2el("link-view-inner")
     inner.textContent = ""
 
-    let height = window.innerHeight - 100
-    let width = Math.floor(window.innerWidth * 0.8)
-    if (width < 800) {
-        width = 800
+    let baseUrl = getBaseUrl(url)
+    if (isImageFile(baseUrl)) {
+        // Images are open witout an iframe, with a simple div
+        openInDiv(url, inner)
+    } else {
+        // Everything else opened with an iframe
+        openInIframe(url, inner)
     }
-
-    // Open link in an iframe and insert it into the inner div
-    let iframe = document.createElement("iframe")
-    iframe.src = url
-    iframe.width = `${width}px`
-    iframe.height = `${height}px`
-    iframe.frameBorder="0"
-    iframe.onload = () => {
-        setLinkViewPatelState(true)
-        iframe.focus()
-        currentLinkViewUrl = url
-    }
-    inner.appendChild(iframe)
 }
 
 function closeLinkViewPanel() {
     setLinkViewPatelState(false)
 }
+
+
+function zoomFrameImg(key) {
+    let minWidth = 100
+    let maxWidth = 4000
+    let elem = id2el("frame-img")
+    if (elem == null) {
+        return
+    }
+    let width = elem.width
+    if ((key === "[") && (width > minWidth)) {
+        imgWidth = width * 0.9
+        elem.width = imgWidth
+    }
+    if ((key === "]") && (width < maxWidth)) {
+        imgWidth = width * 1 / 0.9
+        elem.width = imgWidth
+    }
+}
+
 
 // Handle escape keypress.
 // Close the link view panel when pressing escape.
@@ -133,6 +200,8 @@ document.onkeydown = function(evt) {
     if(evt.key === "Escape") {
         closeLinkViewPanel()
     }
+
+    if((evt.key === "[") || (evt.key === "]")) {
+        zoomFrameImg(evt.key)
+    }
 }
-
-
