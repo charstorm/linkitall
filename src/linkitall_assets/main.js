@@ -74,9 +74,11 @@ function setLinkViewPatelState(state) {
     if (state) {
         linkViewOuterElem.style.zIndex = "3"
         linkViewOuterElem.style.display = "block"
+        document.body.style.overflow = 'hidden'
     } else if (id2el("link-view-panel").style.display != "none") {
         linkViewOuterElem.style.zIndex = "-1"
         linkViewOuterElem.style.display = "none"
+        document.body.style.overflow = 'visible'
     }
 }
 
@@ -115,9 +117,10 @@ function openNodeLink(evt, url, aux) {
     iframe.frameBorder="0"
     iframe.onload = () => {
         setLinkViewPatelState(true)
+        iframe.focus()
+        currentLinkViewUrl = url
     }
     inner.appendChild(iframe)
-    currentLinkViewUrl = url
 }
 
 function closeLinkViewPanel() {
