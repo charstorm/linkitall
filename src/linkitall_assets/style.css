@@ -10,6 +10,7 @@ body {
     color: #ddd;
     font-family: Sans;
     background-color: hsl(205, 0%, 17%);
+    padding: 20px;
 }
 
 .board {
