@@ -1,6 +1,6 @@
 # linkitall
 
-❗The project is still in beta phase. Expect breaking changes to graph definitions in future.
+❗The project is still in beta phase. Expect breaking changes to graph definitions in the future.
 
 Linkitall is a tool to create a dependency graph of ideas. The generated graph gives a strict level-based graphical structure to knowledge. Linkitall takes a graph definition file in YAML format and generates an HTML file containing nodes and connections between them. This makes Linkitall a powerful tool to build teaching materials as well as reference materials.
 
@@ -44,9 +44,37 @@ To run the graph generation, execute the following command (assuming `targetdir`
 linkitall -i targetdir
 ```
 
-If executed successfully, it will generate  an `index.html` file at `targetdir`. Additionally, asset files (CSS, JS, etc) required for the generated HTML will be copied to the `targetdir` with name `linkitall_assets`. These are initially located in the same directory of the `linkitall` tool. However, it is a one-time action. Subsequent invocation of the tool will skip this copy-assets step.
+If executed successfully, it will generate  an `index.html` file at `targetdir`. Additionally, asset files (CSS, JS, etc) required for the generated HTML will be copied to the `targetdir` with name `linkitall_assets`. These are initially located in the same directory of the `linkitall` tool. However, it is a one-time action. Subsequent invocation of the tool will skip this copy-assets step. Same is true for the vendor files (3rd party libraries) used by the project. They are stored in `linkitall_vendor` directory.
 
 One can open the generated HTML file in a browser and see the result.
+
+### CLI
+
+```
+Usage: linkitall [--serve] [--release] [--listen LISTEN] --indir INDIR [--graph GRAPH] [--out OUT] [--overwrite]
+
+Options:
+  --serve, -s            run in edit-update-serve mode
+  --release, -r          run in release mode
+  --listen LISTEN, -l LISTEN
+                         listen address in serve mode [default: :8101]
+  --indir INDIR, -i INDIR
+                         path to the input directory
+  --graph GRAPH, -g GRAPH
+                         input graph base filename [default: graph.yaml]
+  --out OUT, -o OUT      output html base filename [default: index.html]
+  --overwrite            overwrite asset files
+  --help, -h             display this help and exit
+```
+
+1. `serve` - to run in server mode. See below.
+2. `release` - run in release mode. This includes:
+    - use CDN for links, instead of local vendor files.
+3. `listen` - the address to listen to (eg: ":8101") in the server mode.
+4. `indir` - input (or target) directory containing the graph file.
+5. `graph` - base-name of the graph file (eg: "main.yaml") inside `indir`.
+6. `out` - base-name of the output file to be created inside `indir`.
+
 
 ### Server Mode
 
@@ -78,5 +106,5 @@ For now see `examples/simple` for reference.
 
 ## License
 
-All files in this repo, except those in `src/linkitall_assets/vendor/`, follow the MIT License.
+All files in this repo (except those in `src/linkitall_vendor/`) follow the MIT License.
 See LICENSE for details. The files in the vendor directory have their own licenses.
