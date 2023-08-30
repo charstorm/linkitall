@@ -28,6 +28,7 @@ import (
 // For these, full path is attached by the getInputsForProcessing() function.
 type CliArgs struct {
 	ServerMode bool   `arg:"-s,--serve" help:"run in edit-update-serve mode"`
+	Release    bool   `arg:"-r,--release" help:"run in release mode"`
 	ServerAddr string `arg:"-l,--listen" default:":8101" help:"listen address in serve mode"`
 	InputDir   string `arg:"-i,--indir,required" help:"path to the input directory"`
 	GraphFile  string `arg:"-g,--graph" default:"graph.yaml" help:"input graph base filename"`
@@ -40,6 +41,11 @@ var bufferedStdin *bufio.Reader = bufio.NewReader(os.Stdin)
 // Return path to the assets directory inside indir
 func getPathToAssetDir(indir string) string {
 	return filepath.Join(indir, "linkitall_assets")
+}
+
+// Similar to the above, but for vendor directory
+func getPathToVendorDir(indir string) string {
+	return filepath.Join(indir, "linkitall_vendor")
 }
 
 // Check if the give `path` is accessible.
@@ -136,21 +142,32 @@ func getExecutableDir() (string, error) {
 
 // Copy all the assets files to the target directory where the output will be generated.
 // The asset files (source) are located in the same directory of the executable.
-func copyAssetsFilesToDir(targetDir string, overwrite bool) error {
+func copyAssetsAndVendorFilesToDir(targetDir string, overwrite bool, release bool) error {
 	execDir, err := getExecutableDir()
 	if err != nil {
 		return err
 	}
 
 	assetPath := getPathToAssetDir(execDir)
-	finalPath := getPathToAssetDir(targetDir)
-	if !overwrite && isPathAccessible(finalPath, "dir") {
-		log.Printf("Asset dir %s already exists. Skipping copying assets\n", finalPath)
-		return nil
+	targetAssetPath := getPathToAssetDir(targetDir)
+	if !overwrite && isPathAccessible(targetAssetPath, "dir") {
+		log.Printf("Asset dir %s already exists. Skipping copying assets\n", targetAssetPath)
+	} else {
+		log.Printf("Copy %s -> %s\n", assetPath, targetAssetPath)
+		copylib.Copy(assetPath, targetAssetPath)
 	}
 
-	log.Printf("Copy %s -> %s\n", assetPath, finalPath)
-	copylib.Copy(assetPath, finalPath)
+	vendorPath := getPathToVendorDir(execDir)
+	targetVendorPath := getPathToVendorDir(targetDir)
+	if release {
+		log.Printf("In release mode. Not copying vendor dir")
+	} else if !overwrite && isPathAccessible(targetVendorPath, "dir") {
+		log.Printf("Vendor dir %s already exists. Skipping copying vendor\n", targetVendorPath)
+	} else {
+		log.Printf("Copy %s -> %s\n", vendorPath, targetVendorPath)
+		copylib.Copy(vendorPath, targetVendorPath)
+	}
+
 	return nil
 }
 
@@ -177,7 +194,10 @@ func processGraphWriteOutput(args *CliArgs) error {
 	log.Printf("Number of nodes: %d\n", len(nodes))
 
 	log.Printf("Generating template data\n")
-	templateData := newTemplateData(gdfData, nodes)
+	controlConfig := ControlConfigFields{
+		Release: args.Release,
+	}
+	templateData := newTemplateData(gdfData, nodes, controlConfig)
 
 	targetAssetDir := getPathToAssetDir(args.InputDir)
 	templateFile := filepath.Join(targetAssetDir, "template.html")
@@ -246,7 +266,7 @@ func main() {
 
 	// It doesn't matter whether we are running in server mode or not. We always copy the asset
 	// files to the target dir (input dir in this case).
-	err = copyAssetsFilesToDir(args.InputDir, args.Overwrite)
+	err = copyAssetsAndVendorFilesToDir(args.InputDir, args.Overwrite, args.Release)
 	if err != nil {
 		log.Fatalf("unable to copy asset files to %s", args.InputDir)
 	}

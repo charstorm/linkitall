@@ -12,6 +12,11 @@ type BoardConfigFields struct {
 	Height int
 }
 
+type ControlConfigFields struct {
+	// In release mode, we use CDN for all the vendor files
+	Release bool
+}
+
 // All the data required for generating HTML page from template is stored in this struct
 type TemplateData struct {
 	// Input GDF Data
@@ -20,6 +25,8 @@ type TemplateData struct {
 	Nodes []NodeData
 	// Board configuration
 	BoardConfig BoardConfigFields
+	// Controlling template generation
+	ControlConfig ControlConfigFields
 }
 
 func computeBoardConfig(gdfData *GdfDataStruct, nodes []NodeData) BoardConfigFields {
@@ -44,9 +51,10 @@ func computeBoardConfig(gdfData *GdfDataStruct, nodes []NodeData) BoardConfigFie
 
 // Constructor for TemplateData. There are some fields like BoardConfig that needs to be
 // calculated
-func newTemplateData(gdfData *GdfDataStruct, nodes []NodeData) TemplateData {
+func newTemplateData(gdfData *GdfDataStruct,
+	nodes []NodeData, controlConfig ControlConfigFields) TemplateData {
 	boardConfig := computeBoardConfig(gdfData, nodes)
-	return TemplateData{gdfData, nodes, boardConfig}
+	return TemplateData{gdfData, nodes, boardConfig, controlConfig}
 }
 
 // The function responsible for generating the final HTML from template

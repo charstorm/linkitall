@@ -72,8 +72,12 @@
             {{end}}
         </div>
     </section>
+    {{if .ControlConfig.Release}}
+    <script src="https://cdn.jsdelivr.net/npm/leader-line-new@1.1.5/leader-line.min.js"></script>
+    {{else}}
     <!-- LeaderLine v1.1.5 (c) anseki https://anseki.github.io/leader-line/ -->
-    <script src="linkitall_assets/vendor/leader-line/leader-line-v1.1.5.min.js"></script>
+    <script src="linkitall_vendor/leader-line/leader-line-v1.1.5.min.js"></script>
+    {{end}}
     <script src="linkitall_assets/main.js"></script>
 </body>
 </html>
