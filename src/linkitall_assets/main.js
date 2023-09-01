@@ -17,6 +17,11 @@ function getBaseUrl(url) {
     return url.split(/[?#]/)[0]
 }
 
+function removeAndAddClass(elem, className) {
+    elem.classList.remove(className)
+    elem.classList.add(className)
+}
+
 function isImageFile(filename) {
   let checkExt = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg']
   let lowerFilename = filename.toLowerCase()
@@ -138,6 +143,7 @@ function openInDiv(url, targetParent) {
     divFrame.style.height = withpx(height)
 
     setLinkViewPatelState(true)
+    removeAndAddClass(targetParent, "display-load-effect")
 }
 
 // Open panel for viewing the target url.

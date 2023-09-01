@@ -34,7 +34,7 @@ a, a:link, a:visited, a:hover, a:active {
 .node-content {
     position: relative;
     min-height: 100px;
-    background-color: hsla(205, 0%, 13%);
+    background-color: hsl(205, 0%, 13%);
     text-align: center;
     border: 2px solid hsl(50, 0%, 20%);
     border-radius: 10px;
@@ -50,8 +50,17 @@ a, a:link, a:visited, a:hover, a:active {
 
 .node .title {
     font-size: 1.2em;
-    margin: 5px
+    margin: 5px;
+    color: hsl(50, 0%, 50%);
+}
+
+.node .title a {
     color: #eee;
+}
+
+.node .title a:hover {
+    text-decoration: underline;
+    color: #2af;
 }
 
 .node .subtitle {
@@ -63,7 +72,7 @@ a, a:link, a:visited, a:hover, a:active {
 .link-panel {
     display: flex;
     width: 100%;
-    position:default;
+    position: static;
     min-height: 18px;
 }
 
@@ -118,7 +127,6 @@ a, a:link, a:visited, a:hover, a:active {
 }
 
 #link-view-panel .div-frame {
-    overflow: scroll;
     transform: translateX(-50%);
     background-color: #111e;
     box-shadow: 0px 0px 40px #000;
@@ -132,3 +140,15 @@ a, a:link, a:visited, a:hover, a:active {
     margin-right: auto;
 }
 
+@keyframes zoomIn {
+    0% {
+        transform: scale(0.8);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.display-load-effect {
+    animation: zoomIn 0.5s ease;
+}
