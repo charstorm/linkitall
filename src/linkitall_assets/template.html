@@ -72,6 +72,11 @@
             {{end}}
         </div>
     </section>
+    <script id="buildconfig" type="application/json">
+    {
+        "ArrowDirection": "{{.GdfData.AlgoConfig.ArrowDirection}}"
+    }
+    </script>
     {{if .ControlConfig.Release}}
     <script src="https://cdn.jsdelivr.net/npm/leader-line-new@1.1.5/leader-line.min.js"></script>
     {{else}}

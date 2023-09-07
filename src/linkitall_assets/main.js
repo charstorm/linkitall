@@ -7,10 +7,20 @@
 
 let links = []
 let imgWidth = "60%"
+let _buildConfig = null
 
 // just renaming the function to a simpler one
 function id2el(idstr) {
     return document.getElementById(idstr)
+}
+
+function getBuildConfig() {
+    if (_buildConfig != null) {
+        return _buildConfig
+    }
+    const elem = id2el("buildconfig")
+    _buildConfig = JSON.parse(elem.innerHTML)
+    return _buildConfig
 }
 
 function getBaseUrl(url) {
@@ -28,6 +38,27 @@ function isImageFile(filename) {
   return checkExt.some(ext => lowerFilename.endsWith(ext))
 }
 
+function getLinkOptions(source, target, color) {
+    let sourceTop = source.getBoundingClientRect().top
+    let targetTop = target.getBoundingClientRect().top
+
+    let startSocket = 'bottom'
+    let endSocket = 'top'
+    if (targetTop < sourceTop) {
+        startSocket = 'top'
+        endSocket = 'bottom'
+    }
+
+    let options = {
+        startSocket,
+        endSocket,
+        color,
+        size: 2
+    }
+
+    return options
+}
+
 // Find all the link-source dots and connect them to their target dot.
 function connectDots() {
     // Template used to color links and their dots
@@ -37,7 +68,7 @@ function connectDots() {
     const linkSources = document.getElementsByClassName("link-source")
 
     for (let idx=0; idx < linkSources.length; idx++) {
-        const source = linkSources[idx]
+        let source = linkSources[idx]
         const sourceId = source.id
         if (!sourceId.startsWith("D_")) {
             console.log(`ERROR: source ${source} does not start with D_`)
@@ -45,7 +76,7 @@ function connectDots() {
         }
 
         const targetId = sourceId.replace(/^D_/, "U_")
-        const target = id2el(targetId)
+        let target = id2el(targetId)
         if (target == null) {
             console.log(`ERROR: no target dot with id ${targetId}`)
             continue
@@ -57,11 +88,16 @@ function connectDots() {
         source.style.backgroundColor = color
         target.style.backgroundColor = color
 
-        // The main step - connect the dots
+        let buildConfig = getBuildConfig()
+        if (buildConfig.ArrowDirection == "parent2child") {
+            // Swap source and target in this case
+            let temp = source
+            source = target
+            target = temp
+        }
+
         let link = new LeaderLine(source, target)
-        link.setOptions({startSocket: 'bottom', endSocket: 'top'})
-        link.color = color
-        link.size = 2
+        link.setOptions(getLinkOptions(source, target, color))
         links.push(link)
     }
 }

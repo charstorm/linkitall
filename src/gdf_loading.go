@@ -63,7 +63,8 @@ type NodeInputFields struct {
 }
 
 type AlgoConfigFields struct {
-	LevelStrategy string `yaml:"level-strategy,omitempty"`
+	LevelStrategy  string `yaml:"level-strategy,omitempty"`
+	ArrowDirection string `yaml:"arrow-direction,omitempty"`
 }
 
 type GdfDataStruct struct {
@@ -80,6 +81,13 @@ func validateAndUpdateAlgoConfig(algoConfig *AlgoConfigFields) error {
 	}
 	if algoConfig.LevelStrategy != "bottom2top" && algoConfig.LevelStrategy != "top2bottom" {
 		return fmt.Errorf("invalid level strategy: '%v'", algoConfig.LevelStrategy)
+	}
+
+	if len(algoConfig.ArrowDirection) == 0 {
+		algoConfig.ArrowDirection = "child2parent"
+	}
+	if algoConfig.ArrowDirection != "child2parent" && algoConfig.ArrowDirection != "parent2child" {
+		return fmt.Errorf("invalid arrow direction: '%v'", algoConfig.ArrowDirection)
 	}
 	return nil
 }

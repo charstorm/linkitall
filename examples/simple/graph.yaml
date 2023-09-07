@@ -12,8 +12,10 @@ head-config:
     author: Vinay Krishnan
 
 algo-config:
-    # this can also be bottom2top (which is the default)
+    # Supported: bottom2top (default), top2bottom
     level-strategy: top2bottom
+    # Supported: child2parent (default), parent2child
+    arrow-direction: child2parent
 
 resources:
     # Page stored in resources locally. Nodes can 'linkto' this page.
