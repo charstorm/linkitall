@@ -16,6 +16,8 @@ algo-config:
     level-strategy: top2bottom
     # Supported: child2parent (default), parent2child
     arrow-direction: child2parent
+    # Supported: ascend (default), descend
+    node-sorting: ascend
 
 resources:
     # Page stored in resources locally. Nodes can 'linkto' this page.

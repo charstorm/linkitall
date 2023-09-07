@@ -65,6 +65,7 @@ type NodeInputFields struct {
 type AlgoConfigFields struct {
 	LevelStrategy  string `yaml:"level-strategy,omitempty"`
 	ArrowDirection string `yaml:"arrow-direction,omitempty"`
+	NodeSorting    string `yaml:"node-sorting,omitempty"`
 }
 
 type GdfDataStruct struct {
@@ -88,6 +89,13 @@ func validateAndUpdateAlgoConfig(algoConfig *AlgoConfigFields) error {
 	}
 	if algoConfig.ArrowDirection != "child2parent" && algoConfig.ArrowDirection != "parent2child" {
 		return fmt.Errorf("invalid arrow direction: '%v'", algoConfig.ArrowDirection)
+	}
+
+	if len(algoConfig.NodeSorting) == 0 {
+		algoConfig.NodeSorting = "ascend"
+	}
+	if algoConfig.NodeSorting != "ascend" && algoConfig.NodeSorting != "descend" {
+		return fmt.Errorf("invalid growth strategy: '%v'", algoConfig.NodeSorting)
 	}
 	return nil
 }

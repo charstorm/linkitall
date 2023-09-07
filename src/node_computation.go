@@ -309,7 +309,8 @@ func reverseNodeLevels(nodes []NodeData) {
 //
 // Maximum number of iterations = number of nodes.
 // At the end, perform sanity checks on the code (and coder)
-func computeLevels(strategy string, nodes []NodeData) error {
+func computeLevels(algoConfig *AlgoConfigFields, nodes []NodeData) error {
+	strategy := algoConfig.LevelStrategy
 	var currentLevelNodeIds []int
 	nextLevelNodeIds := make([]int, 0, defaultCapacity)
 
@@ -342,6 +343,10 @@ func computeLevels(strategy string, nodes []NodeData) error {
 	err := validateComputeLevels(strategy, nodes)
 	if err != nil {
 		return err
+	}
+
+	if algoConfig.NodeSorting == "descend" {
+		reverseNodeLevels(nodes)
 	}
 
 	return nil
@@ -549,6 +554,23 @@ func computeResourceLinkFields(gdfData *GdfDataStruct, nodes []NodeData) error {
 	return nil
 }
 
+// In case of NodeSorting == descend, we have to switch the positions of depends-on dots
+// and used-by dots.
+func handleNodeSorting(algoConfig *AlgoConfigFields, nodes []NodeData) {
+	if algoConfig.NodeSorting == "ascend" {
+		// default behavior - nothing to do
+		return
+	}
+	for idx := range nodes {
+		node := &nodes[idx]
+
+		// we also have to flip the IntIdFields
+		tempIds := node.IntIdFields.UsedByIds
+		node.IntIdFields.UsedByIds = node.IntIdFields.DependsOnIds
+		node.IntIdFields.DependsOnIds = tempIds
+	}
+}
+
 // Do all the steps related to creating list of NodeData and filling all the fields.
 // This is the top level function which handles everything.
 func createComputeAndFillNodeDataList(gdfData *GdfDataStruct) ([]NodeData, error) {
@@ -559,12 +581,13 @@ func createComputeAndFillNodeDataList(gdfData *GdfDataStruct) ([]NodeData, error
 		return nodeDataSeq, err
 	}
 
-	err = computeLevels(gdfData.AlgoConfig.LevelStrategy, nodeDataSeq)
+	err = computeLevels(&gdfData.AlgoConfig, nodeDataSeq)
 	if err != nil {
 		return nodeDataSeq, err
 	}
 
 	levelMap := computeShiftsAndGetLevelMap(nodeDataSeq)
+	handleNodeSorting(&gdfData.AlgoConfig, nodeDataSeq)
 	fillElemIdsForAllNodes(nodeDataSeq)
 	computeNodePositionsAndUpdate(&gdfData.DisplayConfig, levelMap, nodeDataSeq)
 	sortDotsToUntangleLinks(nodeDataSeq)
