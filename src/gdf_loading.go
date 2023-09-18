@@ -164,7 +164,7 @@ func validateAndUpdateNodes(nodes []NodeInputFields) error {
 	}
 
 	if numLevel0Nodes == 0 {
-		return fmt.Errorf("these must be atleast 1 node without any dependency")
+		return fmt.Errorf("there must be atleast 1 node without any dependency")
 	}
 
 	for _, node := range nodes {

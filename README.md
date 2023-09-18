@@ -1,12 +1,7 @@
 # linkitall
 
-❗The project is still in beta phase. Expect breaking changes to graph definitions in the future.
+With Linkitall, we can create a visual map of how ideas are related to each other. The map shows the hierarchy and connections of different concepts in a clear and organized way in the form of a dependency graph. We just need to write a YAML file that defines the graph structure and Linkitall will generate an HTML file with interactive nodes and links. Linkitall is a great tool for creating educational and reference materials that show the big picture of any topic.
 
-Linkitall is a tool to create a dependency graph of ideas. The generated graph gives a strict level-based graphical structure to knowledge. Linkitall takes a graph definition file in YAML format and generates an HTML file containing nodes and connections between them. This makes Linkitall a powerful tool to build teaching materials as well as reference materials.
-
-This tool is part of the **graphitout** project.  Checkout our [YouTube channel](https://www.youtube.com/channel/UCSYUPhmh-x85NSslUvz-PUQ) to see this tool in action.
-
-Our motto is **untangle, refactor, rename**
 
 ## Build
 
@@ -103,6 +98,16 @@ With this development process for the graph will be as follows:
 To be filled later.
 
 For now see `examples/simple` for reference.
+
+## External Examples
+
+We are currently building graphs for topics covered in class 11 and 12 (plus-one and plus-two).
+You will find the example graphs in this repository:
+[class-11-12-india](https://github.com/charstorm/class-11-12-india) (See readme.md).
+
+## Status
+
+❗The project is still in beta phase. Expect breaking changes to graph definitions in the future.
 
 ## License
 
