@@ -161,7 +161,6 @@ function openInIframe(url, targetParent) {
     iframe.onload = () => {
         setLinkViewPatelState(true)
         iframe.focus()
-        currentLinkViewUrl = url
     }
     targetParent.appendChild(iframe)
 }
@@ -210,6 +209,7 @@ function openNodeLink(evt, url, aux) {
         // Everything else opened with an iframe
         openInIframe(url, inner)
     }
+    currentLinkViewUrl = url
 }
 
 function closeLinkViewPanel() {
