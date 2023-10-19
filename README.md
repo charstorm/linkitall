@@ -4,6 +4,11 @@ With Linkitall, we can create a visual map of how ideas are related to each othe
 
 An example: [Trigonometric Relations](https://charstorm.github.io/class-11-12-india/class11/maths/trigonometry/relations/)
 
+## Usage
+
+Download the latest release zipfile and follow the instructions in the README.md inside.
+
+If the release files fail due to some reason, please build the tool from the source as explained below.
 
 ## Build
 
@@ -109,7 +114,7 @@ You will find the example graphs in this repository:
 
 ## Status
 
-❗The project is still in beta phase. Expect breaking changes to graph definitions in the future.
+❗The project is still in beta phase.
 
 ## License
 
