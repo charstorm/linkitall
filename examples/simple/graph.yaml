@@ -37,7 +37,7 @@ nodes:
     - name: tap_water
       title: Tap Water
       linkto:
-          # resource defined in section resources
+          # resource defined in section `resources`
           resource: main
           # the id of the target section
           target: tap-water
