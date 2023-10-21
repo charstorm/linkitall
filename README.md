@@ -1,4 +1,6 @@
-# linkitall
+🡑 Table of Contents: Use the button on the left of README.md
+
+## Introduction
 
 With Linkitall, we can create a visual map of how ideas are related to each other. The map shows the hierarchy and connections of different concepts in a clear and organized way in the form of a dependency graph. We just need to write a YAML file that defines the graph structure and Linkitall will generate an HTML file with interactive nodes and links. Linkitall is a great tool for creating educational and reference materials that show the big picture of any topic.
 
@@ -12,7 +14,7 @@ If the release files fail due to some reason, please build the tool from the sou
 
 ## Build
 
-The steps for building the tool from the source is given here.
+The steps for building the tool from the source are given here.
 
 Clone the source files locally:
 
@@ -30,7 +32,7 @@ go build
 ./linkitall --help
 ```
 
-To make the tool available globally, it is required to add the directory path to PATH environment variable.
+To make the tool available globally, it is required to add the directory path to the PATH environment variable.
 
 ```bash
 export PATH="$PATH:/path/to/linkitall/src/"
@@ -38,9 +40,10 @@ export PATH="$PATH:/path/to/linkitall/src/"
 
 ## Graph Generation
 
-The tool takes the path to a directory containing the graph file `graph.yaml` and it's dependent resources as the input. See `examples/simple` for a quick reference. More details about the graph file is explained in the section "Graph File",
+The tool takes the path to a directory containing the graph file `graph.yaml` and its dependent resources as the input. See `examples/simple` for a quick reference.
+More details about the graph file are explained in the section "Graph File",
 
-To run the graph generation, execute the following command (assuming `targetdir` as the directory of graph file and its resources):
+To run the graph generation, execute the following command (assuming `targetdir` is the directory of graph file and its resources):
 
 ```bash
 linkitall -i targetdir
@@ -86,25 +89,128 @@ The default behavior of the tool is to run the generation process only once. Thi
 linkitall -s -i targetdir
 ```
 
-This will start an HTTP development server at default port 8101. One can see the results by visiting http://127.0.0.1:8101 . 
+This will start an HTTP development server at default port 8101. One can see the results by visiting http://127.0.0.1:8101 .
 
 The tool will wait for user input to update the generated graph. Enter will trigger a graph generation, q will quit the tool.
 
 With this development process for the graph will be as follows:
 
-1. Make changes to graph file
+1. Make changes to the graph file
 
 2. Press Enter to trigger a graph generation
-   
+
    1. If there are errors, fix them and continue
 
 3. Refresh the webpage to see the updated graph
 
 ## Graph File
 
-To be filled later.
+The Graph Definition File (GDF) is a YAML file with different sections.
+The default filename expected for the file is `graph.yaml`.
+Different sections of the graph file are explained below.
 
-For now see `examples/simple` for reference.
+### head-config
+These fields will be forwarded to the `head` section of the output html file.
+Example:
+```yaml
+head-config:
+    title: Awesome Graph
+    description: A long description
+    author: Someone
+```
+
+### display-config
+These fields control the size and spacing of nodes in the graph.
+Example:
+```yaml
+display-config:
+    # Horizontal spacing
+    horizontal-step-px: 400
+    # Vertical spacing
+    vertical-step-px: 300
+    # Width of each node
+    node-box-width-px: 300
+    # There is no configuration for the node height from the graph file.
+```
+The numerical values shown in the configuration above are the default values.
+
+### resources
+These are the resources used in the graph.
+Resources can be images, pdf-files, html pages, etc.
+When clicked on that node, the corresponding link will be opened.
+Each node can "linkto" a resource.
+Multiple nodes can share the same resource.
+Example:
+```yaml
+# The keys will be used in the "linkto" field of each node
+resources:
+    # An internal link
+    main: resources/main.html
+    # An external link
+    disinfectants_wiki: https://en.wikipedia.org/wiki/Disinfectant
+    # Local or web images work too
+    algae_image: resources/pexels-daria-klet-8479585.jpg
+    # Local or web pdf references also work.
+    # (Note: #view=fit is not part of the filename. It is added to resize the pdf view)
+    microorganisms_pdf: resources/microorganisms.pdf#view=fit
+```
+An explanation of using these references will be provided below.
+
+### nodes
+This is a list of data dictionaries for each node in the graph.
+Example:
+```yaml
+nodes:
+      # Expects lowercase, without space, must be unique
+    - name: tap_water
+      # This the the text that will be shown on the node
+      title: Tap Water
+      # Text that will be shown below title
+      subtitle: Node about tap water
+      # Resource information for this node
+      linkto:
+          # Resource defined in section resources
+          resource: main
+          # The id of the target section in the resource page (optional)
+          target: tap-water
+      depends-on:
+          # List of dependencies (their name, not title)
+          - pure_water
+          - impurities
+
+    - name: pure_water
+      # If title is not provided, it will be guessed based on name
+      linkto:
+          resource: main
+          target: pure-water
+```
+
+### algo-config
+These fields control the node placement, direction, etc of the graph generation
+algorithm. Example:
+```yaml
+algo-config:
+    # Supported: bottom2top (default), top2bottom
+    level-strategy: top2bottom
+    # Supported: child2parent (default), parent2child
+    arrow-direction: child2parent
+    # Supported: ascend (default), descend
+    node-sorting: ascend
+```
+
+[More details on algo-config](docs/algo-config/README.md)
+
+## User Interface
+
+The graph generated is a basic HTML web-page. But we have added a few features to make it
+easy to use.
+
+1. A resource connected to a node (if available) can be accessed by left-clicking the 
+   node's title. Middle-click or Ctrl-click will open the same resource in a new tab.
+2. Clicking on the connection box (those small circles with a +) will move the view to
+   the target node. The target node will be highlighted in this case.
+3. When an image resource is viewed in the same page of the graph, keys "[" and "]"
+   can be used to control the size/zoom of the image.
 
 ## External Examples
 
