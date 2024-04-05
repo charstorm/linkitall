@@ -1,5 +1,3 @@
-🡑 Table of Contents: Use the button on the left of README.md
-
 ## Introduction
 
 With Linkitall, we can create a visual map of how ideas are related to each other. The map shows the hierarchy and connections of different concepts in a clear and organized way in the form of a dependency graph. We just need to write a YAML file that defines the graph structure and Linkitall will generate an HTML file with interactive nodes and links. Linkitall is a great tool for creating educational and reference materials that show the big picture of any topic.
